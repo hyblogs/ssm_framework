@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ssm.mapper.SysNoticeMapper">
+  <resultMap id="BaseResultMap" type="com.ssm.entity.mapping.SysNotice">
+    <!--
+      WARNING - @mbg.generated
+    -->
+    <id column="id" jdbcType="BIGINT" property="id" />
+    <result column="notice_title" jdbcType="VARCHAR" property="noticeTitle" />
+    <result column="notice_content" jdbcType="VARCHAR" property="noticeContent" />
+    <result column="notice_state" jdbcType="TINYINT" property="noticeState" />
+    <result column="create_time" jdbcType="TIMESTAMP" property="createTime" />
+    <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
+    <result column="remark" jdbcType="VARCHAR" property="remark" />
+  </resultMap>
+  <select id="selectByGen">
+    <!-- 
+    WARNING - @mbg.generated  
+    -->  
+    SELECT 
+        id AS id , 
+        notice_title AS noticeTitle , 
+        notice_content AS noticeContent , 
+        notice_state AS noticeState , 
+        create_time AS createTime , 
+        update_time AS updateTime , 
+        remark AS remark  
+    FROM 
+        sys_notice
+  </select>
+</mapper>

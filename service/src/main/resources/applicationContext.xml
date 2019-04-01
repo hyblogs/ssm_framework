@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
+
+    <!-- 加载本地自定义Properties配置文件 -->
+    <bean id="propertyConfigurer" class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+        <property name="ignoreResourceNotFound" value="true"/>
+        <property name="locations">
+            <list>
+                <value>classpath*:jdbc.properties</value>
+                <value>classpath*:redis.properties</value>
+                <value>classpath*:memcached.properties</value>
+                <value>classpath*:sysconfig.properties</value>
+            </list>
+        </property>
+    </bean>
+
+    <!-- 数据源配置文件(xml)引入 -->
+    <import resource="classpath:datasource/application-datasource.xml"/>
+    <import resource="classpath:datasource/application-mybatis.xml"/>
+
+    <!-- Redis数据库配置文件(xml)引入 -->
+    <import resource="classpath:datasource/application-redis.xml"/>
+
+    <!-- Memcached缓存配置文件(xml)引入 -->
+    <import resource="classpath:datasource/application-memcached.xml"/>
+
+    <!-- 注册获取Spring中已存在的Bean帮助类 -->
+    <bean name="springContextutil" class="com.ssm.framework.SpringContextUtil"/>
+
+    <!-- 自动扫描的包名 -->
+    <context:component-scan base-package="com.ssm"/>
+</beans>

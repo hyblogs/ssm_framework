@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+    <meta name="renderer" content="webkit">
+    <title>管理员管理</title>
+    <link rel="stylesheet" href="./../../css/pintuer.css">
+    <link rel="stylesheet" href="./../../css/style.css">
+    <link rel="stylesheet" href="./../../css/admin.css">
+    <link rel="stylesheet" href="./../../layui/css/layui.css">
+
+    <script type="text/javascript" src="./../../js/jquery.js"></script>
+    <script type="text/javascript" src="./../../js/pintuer.js"></script>
+    <script type="text/javascript" src="./../../layer/layer.js"></script>
+    <script type="text/javascript" src="./../../layui/layui.all.js"></script>
+    <script type="text/javascript" src="./../../js/common.js"></script>
+    <!--页面数据绑定的js-->
+    <script type="text/javascript" src="./../../js/avalon.js"></script>
+    <script type="text/javascript" src="sysUser.js"></script>
+</head>
+<body>
+    <div class="panel admin-panel" ms-controller="sysUser">
+        <div class="panel-head"><strong class="icon-reorder"> 用户列表</strong></div>
+        <div class="padding border-bottom">
+            <ul class="search" style="padding-left:10px;">
+                <li><a ms-on-click="addSysUser($event)" class="button border-main icon-plus-square-o" href="javascript:void(0)"> 添加用户</a></li>
+                <li>搜索：</li>
+                <li>
+                    <select ms-duplex="@sysUserSearchParams.isLogin" name="isLogin" class="input select-search">
+                        <option value="">---是否登录---</option>
+                        <option value="1">是</option>
+                        <option value="0">否</option>
+                    </select>
+                </li>
+                <li>
+                    <select ms-duplex="@sysUserSearchParams.isOpenLoginCheck" name="isOpenLoginCheck" class="input select-search">
+                        <option value="">-是否登录检测-</option>
+                        <option value="1">是</option>
+                        <option value="0">否</option>
+                    </select>
+                </li>
+                <li>
+                    <select ms-duplex="@sysUserSearchParams.state" name="state" class="input select-search">
+                        <option value="">---是否有效---</option>
+                        <option value="1">是</option>
+                        <option value="0">否</option>
+                    </select>
+                </li>
+                <li>
+                    <select ms-duplex="@sysUserSearchParams.roleId" name="roleId" class="input select-search">
+                        <option value="">--请选择角色--</option>
+                        <!--ms-for:(index,item) in @sysRoleList-->
+                        <option ms-attr="{value:item.id}">{{item.roleName}}</option>
+                        <!--ms-for-end:-->
+                    </select>
+                </li>
+                <li>
+                    <input ms-duplex="@sysUserSearchParams.mobile" type="text" placeholder="请输入搜索手机号" name="mobile" class="input" style="width:250px; line-height:17px;display:inline-block"/>
+                    <a href="javascript:void(0)" class="button border-main icon-search my-search-btn" ms-on-click="@findSysUser()"> 搜索</a>
+                </li>
+            </ul>
+        </div>
+        <table class="table table-hover text-center">
+            <tr>
+                <th>名称</th>
+                <th>昵称</th>
+                <th>手机号码</th>
+                <th>电子邮箱</th>
+                <th>性别</th>
+                <th>年龄</th>
+                <th>身份证号码</th>
+                <th>审核状态</th>
+                <th>账户状态</th>
+                <th>用户角色</th>
+                <th>是否登录</th>
+                <th>登录检测</th>
+                <th width="310">操作</th>
+            </tr>
+
+            <!--ms-for:(index,item) in @sysUserList-->
+            <tr>
+                <td><font color="#00CC99">{{item.sysUserName}}</font></td>
+                <td>{{item.sysUserNick}}</td>
+                <td>{{item.mobile}}</td>
+                <td>{{item.email}}</td>
+                <td>
+                    <span ms-if="item.sex != null && item.sex == 1" class="icon-male" style="font-size: 24px; color: #03b6fd;"></span>
+                    <span ms-if="item.sex != null && item.sex == 0" class="icon-female" style="font-size: 24px; color: #FFC0CB;"></span>
+                </td>
+                <td>{{item.age}}</td>
+                <td>{{item.idNumber}}</td>
+                <td>
+                    <div ms-if="item.auditState != null && item.auditState == 2" class="txt txt-small radius bg-black">待审</div>
+                    <div ms-if="item.auditState != null && item.auditState == 1" class="txt txt-small radius bg-yellow">成功</div>
+                    <div ms-if="item.auditState != null && item.auditState == 0" class="txt txt-small radius bg-gray">失败</div>
+                </td>
+                <td>
+                    <div ms-click="changeState(item.id, item.state)" ms-if="item.state != null && item.state == 1"
+                         class="txt-border txt-small radius-circle border-green print">
+                        <div class="txt radius-circle bg-green">YES</div>
+                    </div>
+                    <div ms-click="changeState(item.id, item.state)" ms-if="item.state != null && item.state == 0"
+                         class="txt-border txt-small radius-circle border-green print">
+                        <div class="txt radius-circle bg-gray">NO</div>
+                    </div>
+                    <div ms-if="item.state == null" class="txt-border txt-small radius-circle border-green">
+                        <div class="txt radius-circle bg-green-light">EPT</div>
+                    </div>
+                </td>
+                <td>{{item.roleName}}</td>
+                <td>
+                    <span ms-if="item.isLogin != null && item.isLogin == 1" class="badge bg-blue">是</span>
+                    <span ms-if="item.isLogin != null && item.isLogin == 0" class="badge bg-black">否</span>
+                    <span ms-if="item.isLogin == null || item.isLogin == ''" class="badge bg-green-light">无</span>
+                </td>
+                <td>
+                    <span ms-if="item.isOpenLoginCheck != null && item.isOpenLoginCheck == 1" class="badge bg-green">是</span>
+                    <span ms-if="item.isOpenLoginCheck != null && item.isOpenLoginCheck == 0" class="badge bg-gray">否</span>
+                    <span ms-if="item.isOpenLoginCheck == null || item.isOpenLoginCheck == ''" class="badge bg-green-light">无</span>
+                </td>
+                <td>
+                    <div class="button-group">
+                        <a ms-on-click="editSysUserById(item.id)" class="button border-main" href="javascript:void(0)">
+                            <span class="icon-edit"></span> 修改
+                        </a>
+                        <a ms-on-click="delSysUserById(item.id)" class="button border-red" href="javascript:void(0)">
+                            <span class="icon-trash-o"></span> 删除
+                        </a>
+                    </div>
+                </td>
+            </tr>
+            <!--ms-for-end:-->
+
+            <tr>
+                <td colspan="12">
+                    <div id="sysUserPage"></div>
+                </td>
+            </tr>
+        </table>
+    </div>
+</body>
+
+<!--弹窗部分-Start-->
+<div class="panel admin-panel margin-top" ms-controller="editSysUser" id="editSysUser" hidden="hidden">
+    <div class="body-content">
+        <form class="form-x" id="eiditUserForm">
+            <input ms-duplex="@sysUser.id" type="hidden" name="id" value=""/>
+            <div class="form-group">
+                <div class="label">
+                    <label>用户名称：</label>
+                </div>
+                <div class="field">
+                    <input ms-duplex="@sysUser.sysUserName" type="text" name="sysUserName" class="input w50"
+                           data-validate="required:请输入用户名称!"/>
+                    <div class="tips"></div>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="label">
+                    <label>用户昵称：</label>
+                </div>
+                <div class="field">
+                    <input ms-duplex="@sysUser.sysUserNick" type="text" class="input w50" name="sysUserNick"/>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="label">
+                    <label>手机号码：</label>
+                </div>
+                <div class="field">
+                    <input ms-duplex="@sysUser.mobile" type="text" class="input w50" name="mobile"
+                           data-validate="required:请输入手机号码!"/>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="label">
+                    <label>电子邮箱：</label>
+                </div>
+                <div class="field">
+                    <input ms-duplex="@sysUser.email" type="text" class="input w50" name="email"/>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="label">
+                    <label>身份证号：</label>
+                </div>
+                <div class="field">
+                    <input ms-duplex="@sysUser.idNumber" type="text" class="input w50" name="idNumber"/>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="label">
+                    <label>用户年龄：</label>
+                </div>
+                <div class="field">
+                    <input ms-duplex="@sysUser.age" type="text" class="input w50" name="age"/>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="label">
+                    <label>用户角色：</label>
+                </div>
+                <div class="field">
+                    <select ms-duplex="@sysUser.roleId" name="parentId" class="input w50">
+                        <!--ms-for:(index,item) in @sysRoleList-->
+                        <option ms-attr="{value:item.id}">{{item.roleName}}</option>
+                        <!--ms-for-end:-->
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="label">
+                    <label>用户性别：</label>
+                </div>
+                <div class="field">
+                    <div class="button-group radio">
+
+                        <label class="button active" ms-if="@sysUser.sex == 1">
+                            <span class="icon icon-check"></span>
+                            <input ms-duplex="@sysUser.sex" name="sex" value="1" type="radio" checked="checked">男
+                        </label>
+                        <label class="button" ms-if="@sysUser.sex == 0 || @sysUser.sex == -1">
+                            <span class="icon icon-check"></span>
+                            <input ms-duplex="@sysUser.sex" name="sex" value="1" type="radio" checked="checked">男
+                        </label>
+                        <label class="button active" ms-if="@sysUser.sex == 0">
+                            <span class="icon icon-times"></span>
+                            <input ms-duplex="@sysUser.sex" name="sex" value="0" type="radio" checked="checked">女
+                        </label>
+                        <label class="button" ms-if="@sysUser.sex == 1 || @sysUser.sex == -1">
+                            <span class="icon icon-times"></span>
+                            <input ms-duplex="@sysUser.sex" name="sex" value="0" type="radio" checked="checked">女
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="label">
+                    <label>审核状态：</label>
+                </div>
+                <div class="field">
+                    <div class="button-group radio">
+                        <label class="button active" ms-if="@sysUser.auditState == 2">
+                            <span class="icon icon-times"></span>
+                            <input ms-duplex="@sysUser.auditState" name="auditState" value="2" type="radio" checked="checked">未审核
+                        </label>
+                        <label class="button" ms-if="@sysUser.auditState == 2 || @sysUser.auditState == -1">
+                            <span class="icon icon-times"></span>
+                            <input ms-duplex="@sysUser.auditState" name="auditState" value="2" type="radio" checked="checked">未审核
+                        </label>
+                        <label class="button active" ms-if="@sysUser.auditState == 1">
+                            <span class="icon icon-check"></span>
+                            <input ms-duplex="@sysUser.auditState" name="auditState" value="1" type="radio" checked="checked">审核成功
+                        </label>
+                        <label class="button" ms-if="@sysUser.auditState == 0 || @sysUser.auditState == -1">
+                            <span class="icon icon-check"></span>
+                            <input ms-duplex="@sysUser.auditState" name="auditState" value="1" type="radio" checked="checked">审核成功
+                        </label>
+                        <label class="button active" ms-if="@sysUser.auditState == 0">
+                            <span class="icon icon-times"></span>
+                            <input ms-duplex="@sysUser.auditState" name="auditState" value="0" type="radio" checked="checked">审核失败
+                        </label>
+                        <label class="button" ms-if="@sysUser.auditState == 1 || @sysUser.auditState == -1">
+                            <span class="icon icon-times"></span>
+                            <input ms-duplex="@sysUser.auditState" name="auditState" value="0" type="radio" checked="checked">审核失败
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="label">
+                    <label>登录检测：</label>
+                </div>
+                <div class="field">
+                    <div class="button-group radio">
+
+                        <label class="button active" ms-if="@sysUser.isOpenLoginCheck == 1">
+                            <span class="icon icon-check"></span>
+                            <input ms-duplex="@sysUser.isOpenLoginCheck" name="isOpenLoginCheck" value="1" type="radio" checked="checked">是
+                        </label>
+                        <label class="button" ms-if="@sysUser.isOpenLoginCheck == 0 || @sysUser.isOpenLoginCheck == -1">
+                            <span class="icon icon-check"></span>
+                            <input ms-duplex="@sysUser.isOpenLoginCheck" name="isOpenLoginCheck" value="1" type="radio" checked="checked">是
+                        </label>
+                        <label class="button active" ms-if="@sysUser.isOpenLoginCheck == 0">
+                            <span class="icon icon-times"></span>
+                            <input ms-duplex="@sysUser.isOpenLoginCheck" name="isOpenLoginCheck" value="0" type="radio" checked="checked">否
+                        </label>
+                        <label class="button" ms-if="@sysUser.isOpenLoginCheck == 1 || @sysUser.isOpenLoginCheck == -1">
+                            <span class="icon icon-times"></span>
+                            <input ms-duplex="@sysUser.isOpenLoginCheck" name="isOpenLoginCheck" value="0" type="radio" checked="checked">否
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="label">
+                    <label>是否有效：</label>
+                </div>
+                <div class="field">
+                    <div class="button-group radio">
+
+                        <label class="button active" ms-if="@sysUser.state == 1">
+                            <span class="icon icon-check"></span>
+                            <input ms-duplex="@sysUser.state" name="state" value="1" type="radio" checked="checked">是
+                        </label>
+                        <label class="button" ms-if="@sysUser.state == 0 || @sysUser.state == -1">
+                            <span class="icon icon-check"></span>
+                            <input ms-duplex="@sysUser.state" name="state" value="1" type="radio" checked="checked">是
+                        </label>
+                        <label class="button active" ms-if="@sysUser.state == 0">
+                            <span class="icon icon-times"></span>
+                            <input ms-duplex="@sysUser.state" name="state" value="0" type="radio" checked="checked">否
+                        </label>
+                        <label class="button" ms-if="@sysUser.state == 1 || @sysUser.state == -1">
+                            <span class="icon icon-times"></span>
+                            <input ms-duplex="@sysUser.state" name="state" value="0" type="radio" checked="checked">否
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="label">
+                    <label>用户备注：</label>
+                </div>
+                <div class="field">
+                    <textarea ms-duplex="@sysUser.remark" type="text" class="input" name="remark"
+                              style="height:100px;"></textarea>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="label">
+                    <label></label>
+                </div>
+                <div class="field">
+                    <button ms-click="subSysUser($event)" class="button bg-main icon-check-square-o" type="button">
+                        提交
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+<!--弹窗部分-End-->
+
+</html>

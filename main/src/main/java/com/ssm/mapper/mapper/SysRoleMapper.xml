@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ssm.mapper.SysRoleMapper">
+  <resultMap id="BaseResultMap" type="com.ssm.entity.mapping.SysRole">
+    <!--
+      WARNING - @mbg.generated
+    -->
+    <id column="id" jdbcType="BIGINT" property="id" />
+    <result column="role_name" jdbcType="VARCHAR" property="roleName" />
+    <result column="module_no" jdbcType="INTEGER" property="moduleNo" />
+    <result column="role_status" jdbcType="TINYINT" property="roleStatus" />
+    <result column="remark" jdbcType="VARCHAR" property="remark" />
+    <result column="create_time" jdbcType="TIMESTAMP" property="createTime" />
+    <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
+  </resultMap>
+  <select id="selectByGen">
+    <!-- 
+    WARNING - @mbg.generated  
+    -->  
+    SELECT 
+        id AS id , 
+        role_name AS roleName , 
+        module_no AS moduleNo , 
+        role_status AS roleStatus , 
+        remark AS remark , 
+        create_time AS createTime , 
+        update_time AS updateTime  
+    FROM 
+        sys_role
+  </select>
+</mapper>

@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+    <meta name="renderer" content="webkit">
+    <title>管理员角色管理</title>
+    <link rel="stylesheet" href="./../../css/pintuer.css">
+    <link rel="stylesheet" href="./../../css/style.css">
+    <link rel="stylesheet" href="./../../css/admin.css">
+    <link rel="stylesheet" href="./../../layui/css/layui.css">
+    <link rel="stylesheet" href="./../../zTreeStyle/zTreeStyle.css">
+
+    <script type="text/javascript" src="./../../js/jquery.js"></script>
+    <script type="text/javascript" src="./../../js/pintuer.js"></script>
+    <script type="text/javascript" src="./../../layer/layer.js"></script>
+    <script type="text/javascript" src="./../../layui/layui.all.js"></script>
+    <script type="text/javascript" src="./../../js/common.js"></script>
+    <script type="text/javascript" src="./../../zTreeStyle/jquery.ztree.core.js"></script>
+    <script type="text/javascript" src="./../../zTreeStyle/jquery.ztree.excheck.js"></script>
+    <!--页面数据绑定的js-->
+    <script type="text/javascript" src="./../../js/avalon.js"></script>
+    <script type="text/javascript" src="sysRole.js"></script>
+</head>
+<body>
+<div class="panel admin-panel" ms-controller="sysRole">
+    <div class="panel-head">
+        <strong class="icon-reorder"> 角色列表</strong>
+    </div>
+    <div class="padding border-bottom">
+        <ul class="search" style="padding-left:10px;">
+            <li><a class="button border-main icon-plus-square-o" href="javascript:void(0)" ms-click="addSysRole($event)"> 添加角色</a></li>
+            <li>搜索：</li>
+            <li>
+                <select ms-duplex="@sysRoleSearchParams.roleState" name="roleState" class="input" style="width:200px; line-height:17px;" ms-on-change="findSysRole()">
+                    <option value="">请选择角色状态</option>
+                    <option value="0">角色无效</option>
+                    <option value="1">角色有效</option>
+                </select>
+            </li>
+            <li>
+                <input ms-duplex="@sysRoleSearchParams.roleName" type="text" placeholder="请输入要搜索的角色名称" name="roleName" class="input" style="width:250px; line-height:17px;display:inline-block"/>
+                <a href="javascript:void(0)" class="button border-main icon-search my-search-btn" ms-on-click="findSysRole()"> 搜索</a>
+            </li>
+        </ul>
+    </div>
+    <table class="table table-hover text-center">
+        <tr>
+            <th>角色名称</th>
+            <th>角色状态</th>
+            <th>角色描述</th>
+            <th>备注</th>
+            <th width="310">操作</th>
+        </tr>
+
+        <!--ms-for:(index,item) in @sysRoleList-->
+        <tr>
+            <td><font color="#00CC99">{{item.roleName}}</font></td>
+            <td>
+                <span ms-click="changeState(item.id, item.roleState)" ms-if="item.roleState == 1" class="badge bg-sub print">有效</span>
+                <span ms-click="changeState(item.id, item.roleState)" ms-if="item.roleState == 0" class="badge bg-gray print">无效</span>
+            </td>
+            <td>{{item.roleDesc}}</td>
+            <td>{{item.remark}}</td>
+            <td>
+                <div class="button-group">
+                    <a ms-on-click="editSysRoleColumnById(item.id)" class="button border-yellow" href="javascript:void(0)">
+                        <span class="icon-bars"></span> 分配菜单
+                    </a>
+                    <a ms-on-click="editSysRoleById(item.id)" class="button border-main" href="javascript:void(0)">
+                        <span class="icon-edit"></span> 修改
+                    </a>
+                    <a ms-on-click="delSysRoleById(item.id)" class="button border-red" href="javascript:void(0)" onclick="return del(1,1,1)">
+                        <span class="icon-trash-o"></span> 删除
+                    </a>
+                </div>
+            </td>
+        </tr>
+        <!--ms-for-end:-->
+
+        <tr>
+            <td colspan="6">
+                <div id="sysRolePage">
+
+                </div>
+            </td>
+        </tr>
+    </table>
+</div>
+</body>
+
+<!--弹窗部分-Start-->
+<div class="panel admin-panel margin-top" ms-controller="editSysRole" id="editSysRole" hidden="hidden">
+    <div class="body-content">
+        <form class="form-x">
+            <input ms-duplex="@sysRole.id" type="hidden" name="id" value=""/>
+            <div class="form-group">
+                <div class="label">
+                    <label>角色名称：</label>
+                </div>
+                <div class="field">
+                    <input ms-duplex="@sysRole.roleName" type="text" name="roleName" class="input w50"
+                           data-validate="required:请输入角色名称!"/>
+                    <div class="tips"></div>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="label">
+                    <label>角色描述：</label>
+                </div>
+                <div class="field">
+                    <textarea ms-duplex="@sysRole.roleDesc" type="text" class="input" name="roleDesc"
+                              style="height:100px;"></textarea>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="label">
+                    <label>角色备注：</label>
+                </div>
+                <div class="field">
+                    <textarea ms-duplex="@sysRole.remark" type="text" class="input" name="remark"
+                              style="height:100px;"></textarea>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="label">
+                    <label>是否有效：</label>
+                </div>
+                <div class="field">
+                    <div class="button-group radio">
+
+                        <label class="button active" ms-if="@sysRole.roleState == 1">
+                            <span class="icon icon-check"></span>
+                            <input ms-duplex="@sysRole.roleState" name="roleState" value="1" type="radio"
+                                   checked="checked">是
+                        </label>
+                        <label class="button" ms-if="@sysRole.roleState == 0 || @sysRole.roleState == -1">
+                            <span class="icon icon-check"></span>
+                            <input ms-duplex="@sysRole.roleState" name="roleState" value="1" type="radio"
+                                   checked="checked">是
+                        </label>
+                        <label class="button active" ms-if="@sysRole.roleState == 0">
+                            <span class="icon icon-times"></span>
+                            <input ms-duplex="@sysRole.roleState" name="roleState" value="0" type="radio"
+                                   checked="checked">否
+                        </label>
+                        <label class="button" ms-if="@sysRole.roleState == 1 || @sysRole.roleState == -1">
+                            <span class="icon icon-times"></span>
+                            <input ms-duplex="@sysRole.roleState" name="roleState" value="0" type="radio"
+                                   checked="checked">否
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="label">
+                    <label></label>
+                </div>
+                <div class="field">
+                    <button ms-click="subSysRole($event)" class="button bg-main icon-check-square-o" type="button">
+                        提交
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="panel admin-panel margin-top" ms-controller="editSysRoleColumn" id="editSysRoleColumn" hidden="hidden">
+    <div class="body-content">
+        <form class="form-x">
+            <div class="form-group" style="padding: 0 10%;">
+                <ul id="treeDemo" class="ztree"></ul>
+            </div>
+            <div class="form-group">
+                <div class="label">
+                    <label></label>
+                </div>
+                <div class="field">
+                    <button ms-click="subSysRoleColumn($event)" class="button bg-main icon-check-square-o" type="button">
+                        提交
+                    </button>
+                    <button ms-click="closeSysRoleColumn($event)" class="button bg-yellow icon-minus-square-o
+                        my-search-btn" style="padding: 10px 30px;" type="button">
+                        取消
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+<!--弹窗部分-End-->
+</html>

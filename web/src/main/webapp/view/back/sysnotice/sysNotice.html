@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+    <meta name="renderer" content="webkit">
+    <title>系统公告管理</title>
+    <link rel="stylesheet" href="./../../css/pintuer.css">
+    <link rel="stylesheet" href="./../../css/style.css">
+    <link rel="stylesheet" href="./../../css/admin.css">
+    <link rel="stylesheet" href="./../../layui/css/layui.css">
+
+    <script type="text/javascript" src="./../../js/jquery.js"></script>
+    <script type="text/javascript" src="./../../js/pintuer.js"></script>
+    <script type="text/javascript" src="./../../layer/layer.js"></script>
+    <script type="text/javascript" src="./../../layui/layui.all.js"></script>
+    <script type="text/javascript" src="./../../js/common.js"></script>
+    <!--页面数据绑定的js-->
+    <script type="text/javascript" src="./../../js/avalon.js"></script>
+    <script type="text/javascript" src="sysNotice.js"></script>
+</head>
+<body>
+<div class="panel admin-panel" ms-controller="sysNotice">
+    <div class="panel-head">
+        <strong class="icon-reorder"> 内容列表</strong>
+    </div>
+    <div class="padding border-bottom">
+        <ul class="search">
+            <li><a class="button border-main icon-plus-square-o" ms-click="addSysNotice($event)" href="javascript:void(0)"> 添加内容</a></li>
+            <li>搜索：</li>
+            <li>状态
+                <select ms-duplex="@sysNoticeSearchParams.noticeState" name="noticeState" class="input" style="width:60px; line-height:17px; display:inline-block">
+                    <option value="">选择</option>
+                    <option value="1">有效</option>
+                    <option value="0">无效</option>
+                </select>
+            </li>
+            <li>
+                <input ms-duplex="@sysNoticeSearchParams.noticeTitle" type="text" placeholder="请输入搜索公告标题" name="noticeTitle" class="input" style="width:250px; line-height:17px;display:inline-block"/>
+                <a href="javascript:void(0)" class="button border-main icon-search my-search-btn" ms-on-click="findSysNotice()"> 搜索</a>
+            </li>
+        </ul>
+    </div>
+    <table class="table table-hover text-center">
+        <tr>
+            <th>公告标题</th>
+            <th width="200">公告内容</th>
+            <th>公告状态</th>
+            <th>创建时间</th>
+            <th>修改时间</th>
+            <th width="250">备注</th>
+            <th width="310">操作</th>
+        </tr>
+        <!--ms-for:(index,item) in @sysNoticeList-->
+        <tr>
+            <td>{{item.noticeTitle}}</td>
+            <td>{{item.noticeContent}}</td>
+            <td>
+                <span ms-click="changeState(item.id, item.noticeState)" ms-if="item.noticeState == 1" class="badge bg-green print">有效</span>
+                <span ms-click="changeState(item.id, item.noticeState)" ms-if="item.noticeState == 0" class="badge print">无效</span>
+            </td>
+            <td>{{item.createTime | date("yyyy MM dd:HH:mm:ss")}}</td>
+            <td>{{item.updateTime | date("yyyy MM dd:HH:mm:ss")}}</td>
+            <td>{{item.remark}}</td>
+            <td>
+                <div class="button-group">
+                    <a ms-on-click="editSysNoticeById(item.id)" class="button border-main" href="javascript:void(0)">
+                        <span class="icon-edit"></span> 修改
+                    </a>
+                    <a ms-on-click="delSysNoticeById(item.id)" class="button border-red" href="javascript:void(0)">
+                        <span class="icon-trash-o"></span> 删除
+                    </a>
+                </div>
+            </td>
+        </tr>
+        <!--ms-for-end:-->
+        <tr>
+            <td colspan="16">
+                <div id="sysNoticePage"></div>
+            </td>
+        </tr>
+    </table>
+</div>
+</body>
+
+<!--弹窗部分-Start-->
+<div class="panel admin-panel margin-top" ms-controller="editSysNotice" id="editSysNotice" hidden="hidden">
+    <div class="body-content">
+        <form class="form-x">
+            <input ms-duplex="@sysNotice.id" type="hidden" name="id" value=""/>
+            <div class="form-group">
+                <div class="label">
+                    <label>公告标题：</label>
+                </div>
+                <div class="field">
+                    <input ms-duplex="@sysNotice.noticeTitle" type="text" name="noticeTitle" class="input"
+                           placeholder="请输入公告标题" data-validate="required:请输入公告标题!"/>
+                    <div class="tips"></div>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="label">
+                    <label>公告内容：</label>
+                </div>
+                <div class="field">
+                    <textarea ms-duplex="@sysNotice.noticeContent" type="text" class="input" name="noticeContent"
+                              style="height:100px;"></textarea>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="label">
+                    <label>公告状态：</label>
+                </div>
+                <div class="field">
+                    <select ms-duplex="@sysNotice.noticeState" name="noticeState" class="input w50">
+                        <option value="">请选择菜单状态</option>
+                        <option value="0">无效</option>
+                        <option value="1">有效</option>
+                        <option value="2">已删除</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="label">
+                    <label>备注：</label>
+                </div>
+                <div class="field">
+                    <textarea ms-duplex="@sysNotice.remark" type="text" class="input" name="remark"
+                              style="height:100px;"></textarea>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="label">
+                    <label></label>
+                </div>
+                <div class="field">
+                    <button ms-on-click="subSysNotice($event)" class="button bg-main icon-check-square-o"
+                            type="button">
+                        提交
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+<!--弹窗部分-End-->
+
+</html>

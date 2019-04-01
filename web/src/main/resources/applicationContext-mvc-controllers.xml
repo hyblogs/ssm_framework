@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:mvc="http://www.springframework.org/schema/mvc"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.3.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.3.xsd
+		http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc-4.3.xsd">
+
+    <!-- 配置文件引入 -->
+    <import resource="classpath*:applicationContext.xml"/>
+
+    <!-- 自动扫描的包名 -->
+    <context:component-scan base-package="com.ssm.service"/>
+    <!-- Controller -->
+    <context:component-scan base-package="com.ssm.controller">
+        <context:include-filter type="annotation" expression="org.springframework.stereotype.Controller"/>
+    </context:component-scan>
+
+    <!-- 对静态资源文件的访问 -->
+    <mvc:resources mapping="/resources/images/**" location="/resources/images/"/>
+    <mvc:resources mapping="/resources/js/**" location="/resources/js/"/>
+    <mvc:resources mapping="/resources/css/**" location="/resources/css/"/>
+
+    <!-- 网站图标，注意 ！favicon.ico 放在 webapp 目录 -->
+    <mvc:resources mapping="/favicon.ico" location="/favicon.ico"/>
+
+    <mvc:default-servlet-handler/>
+</beans>

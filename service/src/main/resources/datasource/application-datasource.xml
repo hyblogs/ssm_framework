@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/tx
+       http://www.springframework.org/schema/tx/spring-tx.xsd">
+
+    <!-- 开启事务支持 -->
+    <tx:annotation-driven transaction-manager="transactionManager"/>
+
+    <!-- 事务增强，这里用的是spring提供的特性-->
+    <tx:advice id="advice" transaction-manager="transactionManager">
+        <tx:attributes>
+            <tx:method name="select*" read-only="true"/>
+            <tx:method name="find*" read-only="true"/>
+            <tx:method name="get*" read-only="true"/>
+            <tx:method name="has*" read-only="true"/>
+            <tx:method name="count*" read-only="true"/>
+            <tx:method name="search*" read-only="true"/>
+        </tx:attributes>
+    </tx:advice>
+
+    <!-- 数据源事务配置 -->
+    <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="datasource-ssm_framework"/>
+    </bean>
+
+    <!-- 数据源管理器配置 -->
+    <bean id="datasource-ssm_framework" class="com.alibaba.druid.pool.DruidDataSource" init-method="init"
+          destroy-method="close">
+        <!-- 驱动类名 -->
+        <property name="driverClassName" value="${driverClassName}"/>
+        <!-- 驱动地址 -->
+        <property name="url" value="${driverUrl}"/>
+        <!-- 账户名称 -->
+        <property name="username" value="${username}"/>
+        <!-- 账户密码 -->
+        <property name="password" value="${password}"/>
+        <!-- 初始化连接大小 -->
+        <property name="initialSize" value="${initialSize}"/>
+        <!-- 连接池最大使用连接数量 -->
+        <property name="maxActive" value="${maxActive}"/>
+        <!-- 连接池最小空闲 -->
+        <property name="minIdle" value="${minIdle}"/>
+        <!-- 获取连接最大等待时间 -->
+        <property name="maxWait" value="${maxWait}"/>
+        <property name="validationQuery" value="SELECT 1"/>
+        <!-- 申请连接时执行validationQuery检测连接是否有效，做了这个配置会降低性能 -->
+        <property name="testOnBorrow" value="${testOnBorrow}"/>
+        <!-- 归还连接时执行validationQuery检测连接是否有效，做了这个配置会降低性能 -->
+        <property name="testOnReturn" value="${testOnReturn}"/>
+        <!-- 建议配置为true，不影响性能，并且保证安全性。申请连接的时候检测，如果空闲时间大于timeBetweenEvictionRunsMillis，执行validationQuery检测连接是否有效。-->
+        <property name="testWhileIdle" value="${testWhileIdle}"/>
+
+        <!-- 配置间隔多久才进行一次检测，检测需要关闭的空闲连接，单位是毫秒 -->
+        <property name="timeBetweenEvictionRunsMillis" value="${timeBetweenEvictionRunsMillis}"/>
+        <!-- 配置一个连接在池中最小生存的时间，单位是毫秒 -->
+        <property name="minEvictableIdleTimeMillis" value="${minEvictableIdleTimeMillis}"/>
+        <!-- 每隔5分钟将监控日志输出到日志文件中，单位是毫秒。 -->
+        <property name="timeBetweenLogStatsMillis" value="${timeBetweenLogStatsMillis}"/>
+
+        <!-- 打开removeAbandoned功能 -->
+        <property name="removeAbandoned" value="${removeAbandoned}"/>
+        <!-- 1800秒，也就是30分钟 -->
+        <property name="removeAbandonedTimeout" value="${removeAbandonedTimeout}"/>
+        <!-- 关闭abandoned连接时输出错误日志 -->
+        <property name="logAbandoned" value="${logAbandoned}"/>
+        <!-- 监控 -->
+        <property name="proxyFilters">
+            <list>
+                <ref bean="stat-filter"/>
+                <ref bean="wall-filter"/>
+                <ref bean="log-filter"/>
+            </list>
+        </property>
+        <!-- 结合更多过滤器 -->
+        <property name="filters" value="stat,wall,config" />
+    </bean>
+
+    <!-- 监控统计 -->
+    <bean id="stat-filter" class="com.alibaba.druid.filter.stat.StatFilter">
+        <!-- 支持合并语法 -->
+        <property name="mergeSql" value="${mergeSql}"/>
+        <!-- 慢SQL时间 -->
+        <property name="slowSqlMillis" value="${slowSqlMillis}"/>
+        <!-- 输出慢SQL日志 -->
+        <property name="logSlowSql" value="${logSlowSql}"/>
+    </bean>
+
+    <!-- Wall-Filter过滤器 -->
+    <bean id="wall-filter" class="com.alibaba.druid.wall.WallFilter">
+        <property name="dbType" value="mysql"/>
+        <property name="config" ref="wall-config"/>
+    </bean>
+    <bean id="wall-config" class="com.alibaba.druid.wall.WallConfig">
+        <!-- 设置允许一次执行多条SQL语句 -->
+        <property name="multiStatementAllow" value="true"/>
+    </bean>
+
+    <!-- 日志 -->
+    <bean id="log-filter" class="com.alibaba.druid.filter.logging.Log4jFilter">
+        <!-- 结果写入日志 -->
+        <property name="resultSetLogEnabled" value="false"/>
+        <!-- 输出可执行的SQL -->
+        <property name="statementExecutableSqlLogEnable" value="true"/>
+    </bean>
+</beans>

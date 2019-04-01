@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ssm.mapper.SysResourceMapper">
+    <resultMap id="BaseResultMap" type="com.ssm.entity.mapping.SysResource">
+        <!--
+          WARNING - @mbg.generated
+        -->
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="resource_name" jdbcType="VARCHAR" property="resourceName"/>
+        <result column="module_no" jdbcType="INTEGER" property="moduleNo"/>
+        <result column="parent_id" jdbcType="BIGINT" property="parentId"/>
+        <result column="resource_level" jdbcType="TINYINT" property="resourceLevel"/>
+        <result column="resource_desc" jdbcType="VARCHAR" property="resourceDesc"/>
+        <result column="resource_sort" jdbcType="INTEGER" property="resourceSort"/>
+        <result column="resource_status" jdbcType="TINYINT" property="resourceStatus"/>
+        <result column="resource_url" jdbcType="VARCHAR" property="resourceUrl"/>
+        <result column="resource_icon" jdbcType="VARCHAR" property="resourceIcon"/>
+        <result column="create_time" jdbcType="TIMESTAMP" property="createTime"/>
+        <result column="update_time" jdbcType="TIMESTAMP" property="updateTime"/>
+    </resultMap>
+
+    <!--public-where-sql-->
+    <sql id="sysResource_where_sql">
+        <if test="id != NULL">
+            AND sys_resource.id = #{id}
+        </if>
+        <if test="resourceName != NULL and resourceName != ''">
+            AND sys_resource.resource_name like concat('%', #{resourceName}, '%')
+        </if>
+        <if test="moduleNo != NULL">
+            AND sys_resource.module_no = #{moduleNo}
+        </if>
+        <if test="parentId != NULL">
+            AND sys_resource.parent_id = #{parentId}
+        </if>
+        <if test="resourceLevel != NULL">
+            AND sys_resource.resource_level = #{resourceLevel}
+        </if>
+        <if test="resourceDesc != NULL">
+            AND sys_resource.resource_desc = #{resourceDesc}
+        </if>
+        <if test="resourceSort != NULL">
+            AND sys_resource.resource_sort = #{resourceSort}
+        </if>
+        <if test="resourceStatus != NULL">
+            AND sys_resource.resource_status = #{resourceStatus}
+        </if>
+        <if test="resourceUrl != NULL and resourceUrl != ''">
+            AND sys_resource.resource_url like concat('%', #{resourceUrl}, '%')
+        </if>
+        <if test="resourceIcon != NULL">
+            AND sys_resource.resource_icon = #{resourceIcon}
+        </if>
+        <if test="createTime != NULL">
+            AND sys_resource.create_time &gt; #{createTime}
+        </if>
+        <if test="updateTime != NULL">
+            AND sys_resource.update_time &gt; #{updateTime}
+        </if>
+    </sql>
+
+    <!--public-column-->
+    <sql id="sysResource_column">
+        sys_resource.id AS id,
+        sys_resource.resource_name AS resourceName,
+        sys_resource.module_no AS moduleNo ,
+        sys_resource.parent_id AS parentId ,
+        sys_resource.resource_level AS resourceLevel ,
+        sys_resource.resource_desc AS resourceDesc ,
+        sys_resource.resource_sort AS resourceSort ,
+        sys_resource.resource_status AS resourceStatus ,
+        sys_resource.resource_url AS resourceUrl ,
+        sys_resource.resource_icon AS resourceIcon ,
+        sys_resource.create_time AS createTime ,
+        sys_resource.update_time AS updateTime
+    </sql>
+
+    <!--根据查询条件查询系统栏目列表信息-->
+    <select id="getSysResourceList" parameterType="java.util.Map" resultType="com.ssm.entity.mapping.SysResource">
+        SELECT
+        <include refid="sysResource_column" />
+        FROM
+        sys_resource
+        <where>
+            <include refid="sysResource_where_sql" />
+            <if test="type != NULL and type == 1">
+                AND parent_id = -1
+            </if>
+            <if test="type != NULL and type == 2">
+                AND parent_id = 0
+            </if>
+        </where>
+        <if test="sortColumn != NULL">
+          ORDER BY ${sortColumn} ${sort}
+        </if>
+    </select>
+
+    <!-- 根据后台管理员账户ID查询对应账户角色下的后台菜单资源信息 -->
+    <select id="getSysResourceByUserId" parameterType="java.util.Map" resultType="com.ssm.entity.mapping.SysResource">
+        SELECT
+        <include refid="sysResource_column" />
+        FROM
+            sys_resource sys_resource
+            LEFT JOIN sys_resource_role srr ON sys_resource.id = srr.resource_id
+            LEFT JOIN sys_role srole ON srr.role_id = srole.id
+            LEFT JOIN sys_user_role sur ON srole.id = sur.sys_role_id
+            LEFT JOIN sys_user su ON sur.sys_user_id = su.id
+        <where>
+            <if test="userId != null">
+                AND su.id = #{userId}
+            </if>
+            <if test="parentId != null">
+                AND sys_resource.parent_id = #{parentId}
+            </if>
+            <if test="resourceStatus != null">
+                AND sys_resource.resource_status = #{resourceStatus}
+            </if>
+        </where>
+        ORDER BY sys_resource.resource_sort ASC
+    </select>
+</mapper>

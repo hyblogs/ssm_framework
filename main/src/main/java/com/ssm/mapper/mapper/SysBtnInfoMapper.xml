@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ssm.mapper.SysBtnInfoMapper">
+  <resultMap id="BaseResultMap" type="com.ssm.entity.mapping.SysBtnInfo">
+    <!--
+      WARNING - @mbg.generated
+    -->
+    <id column="id" jdbcType="BIGINT" property="id" />
+    <result column="btn_name" jdbcType="VARCHAR" property="btnName" />
+    <result column="btn_desc" jdbcType="VARCHAR" property="btnDesc" />
+    <result column="btn_no" jdbcType="VARCHAR" property="btnNo" />
+    <result column="create_time" jdbcType="TIMESTAMP" property="createTime" />
+    <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
+    <result column="btn_status" jdbcType="TINYINT" property="btnStatus" />
+  </resultMap>
+  <select id="selectByGen">
+    <!-- 
+    WARNING - @mbg.generated  
+    -->  
+    SELECT 
+        id AS id , 
+        btn_name AS btnName , 
+        btn_desc AS btnDesc , 
+        btn_no AS btnNo , 
+        create_time AS createTime , 
+        update_time AS updateTime , 
+        btn_status AS btnStatus  
+    FROM 
+        sys_btn_info
+  </select>
+</mapper>

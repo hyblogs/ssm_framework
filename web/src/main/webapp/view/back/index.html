@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+    <meta name="renderer" content="webkit">
+    <title>SSMFrameWork后台管理-首页</title>
+    <link rel="shortcut icon" href="./favicon.ico">
+    <link rel="stylesheet" href="resources/css/pintuer.css">
+    <link rel="stylesheet" href="resources/css/style.css">
+    <link rel="stylesheet" href="resources/css/admin.css">
+    <link rel="stylesheet" href="resources/plugins/layui/css/layui.css">
+
+    <script type="text/javascript" src="resources/js/jquery.js"></script>
+    <script type="text/javascript" src="resources/js/pintuer.js"></script>
+    <script type="text/javascript" src="resources/plugins/layer/layer.js"></script>
+    <script type="text/javascript" src="resources/plugins/layui/layui.all.js"></script>
+    <script type="text/javascript" src="resources/js/common.js"></script>
+    <!--页面数据绑定的js-->
+    <script type="text/javascript" src="resources/js/avalon.js"></script>
+</head>
+<body style="background-color:#f2f9fd;">
+<div ms-controller="index">
+    <div class="header bg-main">
+        <div class="logo margin-big-left fadein-top">
+            <h1><img src="resources/images/y.jpg" class="radius-circle rotate-hover" height="50" alt=""/>SSMFrameWork
+            </h1>
+        </div>
+        <div class="head-l">
+            <a ms-click="@toSiteIndex()" class="button button-little bg-green" href="javascript:void(0);"
+               target="_blank">
+                <span class="icon-home"></span>前台首页
+            </a> &#160;&#160;
+            <a class="button button-little bg-blue" href="javascript:void0;" style="margin: 0 10px;">
+                <span class="icon-wrench"></span> 清除缓存
+            </a> &#160;&#160;
+            <a class="button button-little bg-red" href="toLogin">
+                <span class="icon-power-off"></span> 退出登录
+            </a>
+        </div>
+    </div>
+    <div class="leftnav">
+        <div class="leftnav-title"><strong><span class="icon-list"></span>菜单列表</strong></div>
+
+        <!--ms-for:(index,item) in @resourceList-->
+        <h2 onclick="h2Click(this)"><span ms-attr="{class:@item.resourceIcon}"></span>{{item.resourceName}}</h2>
+        <ul>
+
+            <!--ms-for:(index2,item2) in @item.sysResourceList-->
+            <li><a onclick="ulliaClick(this)" ms-attr="{href:@item2.resourceUrl}" target="right">
+                <span ms-attr="{class:@item2.resourceIcon}"></span>{{item2.resourceName}}</a>
+            </li>
+            <!--ms-for-end:-->
+
+        </ul>
+        <!--ms-for-end:-->
+
+    </div>
+    <ul class="bread">
+        <li><a href="main.html" target="right" class="icon-home"> 首页</a></li>
+        <li><b>当前语言：</b><span style="color:red;">中文</span></li>
+    </ul>
+    <div class="admin" style="overflow: hidden;">
+        <iframe scrolling="auto" frameborder="0" ms-attr="{src:@iframeSrc}" name="right" width="100%"
+                height="100%"></iframe>
+    </div>
+</div>
+
+<script type="text/javascript">
+    /** 点击菜单时样式变化 */
+    function h2Click(el) {
+        $('.leftnav h2').removeClass('on');
+        $('.leftnav ul').css('display', 'none');
+        $(el).next().slideToggle(200);
+        $(el).toggleClass('on');
+    }
+
+    /** 点击菜单时样式变化 */
+    function ulliaClick(el) {
+        $("#a_leader_txt").text($(el).text());
+        $('#a_leader_txt').attr('href', $(el).attr('href'));
+        $('.leftnav ul li a').removeClass('on');
+        $(el).addClass('on');
+    }
+
+    /** Avalon初始化加载 */
+    avalon.ready(function () {
+        //初始化加载后台首页菜单
+        vm.initColumnList();
+    });
+
+    var vm = avalon.define({
+        $id: "index",
+        resourceList: [],
+        iframeSrc: 'view/back/main.html',
+        initColumnList: function () {
+            //layer加载层-设定最长等待5秒
+            var index = layer.load(1, {time: 5 * 1000});
+            $.getJSON("ssm_framework/back/getResources", {}, function (data) {
+                //关闭layer加载层
+                layer.close(index);
+                if (data.retCode === 200) {
+                    vm.resourceList.removeAll();
+                    if (data.retObj != null) {
+                        vm.resourceList.pushArray(data.retObj);
+                    }
+                } else {
+                    layer.alert('初始化数据失败，请稍后重试!', {
+                        icon: 5,
+                        skin: 'layer-ext-moon',
+                        title: '温馨提示'
+                    })
+                }
+            })
+        },
+        toSiteIndex: function () {
+            window.open("http://hyblogs.com/");
+        }
+    })
+</script>
+</body>
+</html>

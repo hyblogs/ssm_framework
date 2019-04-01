@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+    <meta name="renderer" content="webkit">
+    <title>系统资讯管理</title>
+    <link rel="stylesheet" href="./../../css/pintuer.css">
+    <link rel="stylesheet" href="./../../css/style.css">
+    <link rel="stylesheet" href="./../../css/admin.css">
+    <link rel="stylesheet" href="./../../layui/css/layui.css">
+
+    <script type="text/javascript" src="./../../js/jquery.js"></script>
+    <script type="text/javascript" src="./../../js/pintuer.js"></script>
+    <script type="text/javascript" src="./../../layer/layer.js"></script>
+    <script type="text/javascript" src="./../../layui/layui.all.js"></script>
+    <script type="text/javascript" src="./../../js/common.js"></script>
+    <!--页面数据绑定的js-->
+    <script type="text/javascript" src="./../../js/avalon.js"></script>
+    <script type="text/javascript" src="sysNews.js"></script>
+</head>
+<body>
+<div class="panel admin-panel" ms-controller="sysNews" style="width: 2500px;">
+    <div class="panel-head" style="position: fixed; width: 100%;">
+        <strong class="icon-reorder"> 内容列表</strong>
+    </div>
+    <div class="padding border-bottom" style="position: fixed;width: 100%; margin-top: 40px;">
+        <ul class="search" style="padding-left:10px;">
+            <li><a class="button border-main icon-plus-square-o" ms-click="addSysNews($event)" href="javascript:void(0)"> 添加内容</a></li>
+            <li>搜索：</li>
+            <li>状态
+                <select ms-duplex="@sysNewsSearchParams.newsState" name="newsState" class="input" style="width:60px; line-height:17px; display:inline-block">
+                    <option value="">选择</option>
+                    <option value="1">有效</option>
+                    <option value="0">无效</option>
+                </select>
+            </li>
+            <li>
+                <input ms-duplex="@sysNewsSearchParams.newsTitle" type="text" placeholder="请输入搜索资讯标题" name="newsTitle" class="input" style="width:250px; line-height:17px;display:inline-block"/>
+                <a href="javascript:void(0)" class="button border-main icon-search my-search-btn" ms-on-click="findSysNews()"> 搜索</a>
+            </li>
+        </ul>
+    </div>
+    <table class="table table-hover text-center" style="margin-top: 110px;">
+        <tr>
+            <th>资讯标题</th>
+            <th>副标题</th>
+            <th width="200">资讯内容</th>
+            <th width="200">资讯概要</th>
+            <th>资讯类型</th>
+            <th>资讯状态</th>
+            <th>资讯作者</th>
+            <th>资讯来源</th>
+            <th width="150">来源地址</th>
+            <th>查看地址</th>
+            <th>外部来源</th>
+            <th width="200">图片</th>
+            <th width="150">创建时间</th>
+            <th width="150">修改时间</th>
+            <th width="200">备注</th>
+            <th width="310">操作</th>
+        </tr>
+        <!--ms-for:(index,item) in @sysNewsList-->
+        <tr>
+            <td>{{item.newsTitle}}</td>
+            <td>{{item.subTitle}}</td>
+            <td>{{item.newsContent | truncate(30,'...')}}</td>
+            <td>{{item.newsOutline | truncate(30,'...')}}</td>
+            <td>{{item.newsType}}</td>
+            <td>
+                <span ms-click="changeState(item.id, item.newsState)" ms-if="item.newsState == 1" class="badge bg-green print">有效</span>
+                <span ms-click="changeState(item.id, item.newsState)" ms-if="item.newsState == 0" class="badge print">无效</span>
+            </td>
+            <td>{{item.newsAuthor}}</td>
+            <td>{{item.newsFrom}}</td>
+            <td><a class="my-a-href" href="@item.newsFromUrl">{{item.newsFromUrl}}</a></td>
+            <td><a class="my-a-href" href="@item.linkUrl">{{item.linkUrl}}</a></td>
+            <td>
+                <span ms-if="item.isOuter == 0" class="badge bg-green print">否</span>
+                <span ms-if="item.isOuter == 1" class="badge bg-red print">是</span>
+            </td>
+            <td>{{item.newsImgs}}</td>
+            <td width="100">{{item.createTime | date("yyyy MM dd:HH:mm:ss")}}</td>
+            <td width="100">{{item.updateTime | date("yyyy MM dd:HH:mm:ss")}}</td>
+            <td>{{item.remark}}</td>
+            <td>
+                <div class="button-group">
+                    <a ms-on-click="editSysNewsById(item.id)" class="button border-main" href="javascript:void(0)">
+                        <span class="icon-edit"></span> 修改
+                    </a>
+                    <a ms-on-click="delSysNewsById(item.id)" class="button border-red" href="javascript:void(0)">
+                        <span class="icon-trash-o"></span> 删除
+                    </a>
+                </div>
+            </td>
+        </tr>
+        <!--ms-for-end:-->
+        <tr style="position: fixed; width: 100%;">
+            <td colspan="16" style="width: 2500px;">
+                <div id="sysNewsPage" style="margin-left: 35%; float: left; width: 500px;"></div>
+            </td>
+        </tr>
+    </table>
+</div>
+</body>
+
+<!--弹窗部分-Start-->
+<div class="panel admin-panel margin-top" ms-controller="editSysNews" id="editSysNews" hidden="hidden">
+    <div class="body-content">
+        <form class="form-x">
+            <input ms-duplex="@sysNews.id" type="hidden" name="id" value=""/>
+            <div class="form-group">
+                <div class="label">
+                    <label>资讯标题：</label>
+                </div>
+                <div class="field">
+                    <input ms-duplex="@sysNews.newsTitle" type="text" name="newsTitle" class="input"
+                           placeholder="请输入资讯标题" data-validate="required:请输入资讯标题!"/>
+                    <div class="tips"></div>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="label">
+                    <label>副标题：</label>
+                </div>
+                <div class="field">
+                    <input ms-duplex="@sysNews.subTitle" type="text" name="subTitle" class="input"
+                           placeholder="请输入副标题" data-validate="required:请输入副标题!"/>
+                    <div class="tips"></div>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="label">
+                    <label>资讯内容：</label>
+                </div>
+                <div class="field">
+                    <textarea ms-duplex="@sysNews.newsContent" type="text" class="input" name="newsContent"
+                              style="height:100px;"></textarea>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="label">
+                    <label>资讯概要：</label>
+                </div>
+                <div class="field">
+                    <textarea ms-duplex="@sysNews.newsOutline" type="text" class="input" name="newsOutline"
+                              style="height:100px;"></textarea>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="label">
+                    <label>资讯类型：</label>
+                </div>
+                <div class="field">
+                    <select ms-duplex="@sysNews.newsType" name="newsType" class="input w50">
+                        <option value="">请选择资讯类型</option>
+                        <option value="0">无效</option>
+                        <option value="1">有效</option>
+                        <option value="2">已删除</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="label">
+                    <label>资讯状态：</label>
+                </div>
+                <div class="field">
+                    <select ms-duplex="@sysNews.newsState" name="newsState" class="input w50">
+                        <option value="">请选择资讯状态</option>
+                        <option value="0">无效</option>
+                        <option value="1">有效</option>
+                        <option value="2">已删除</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="label">
+                    <label>资讯作者：</label>
+                </div>
+                <div class="field">
+                    <input ms-duplex="@sysNews.newsAuthor" type="text" name="newsAuthor" class="input"
+                           placeholder="请输入资讯作者"/>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="label">
+                    <label>资讯来源：</label>
+                </div>
+                <div class="field">
+                    <input ms-duplex="@sysNews.newsFrom" type="text" name="newsFrom" class="input"
+                           placeholder="请输入资讯来源"/>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="label">
+                    <label>来源地址：</label>
+                </div>
+                <div class="field">
+                    <input ms-duplex="@sysNews.newsFromUrl" type="text" class="input w50" name="newsFromUrl"
+                           value=""  placeholder="请输入来源地址" />
+                    <div class="tips"></div>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="label">
+                    <label>查看地址：</label>
+                </div>
+                <div class="field">
+                    <input ms-duplex="@sysNews.linkUrl" type="text" class="input w50" name="linkUrl"
+                           value=""  placeholder="请输入查看地址" />
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="label">
+                    <label>外部来源：</label>
+                </div>
+                <div class="field">
+                    <div class="button-group radio">
+
+                        <label class="button active" ms-if="@sysNews.isOuter == 1">
+                            <span class="icon icon-check"></span>
+                            <input ms-duplex="@sysNews.isOuter" name="isOuter" value="1" type="radio"
+                                   checked="checked">是
+                        </label>
+                        <label class="button" ms-if="@sysNews.isOuter == 0 || @sysNews.isOuter == -1">
+                            <span class="icon icon-check"></span>
+                            <input ms-duplex="@sysNews.isOuter" name="isOuter" value="1" type="radio"
+                                   checked="checked">是
+                        </label>
+                        <label class="button active" ms-if="@sysNews.isOuter == 0">
+                            <span class="icon icon-times"></span>
+                            <input ms-duplex="@sysNews.isOuter" name="isOuter" value="0" type="radio"
+                                   checked="checked">否
+                        </label>
+                        <label class="button" ms-if="@sysNews.isOuter == 1 || @sysNews.isOuter == -1">
+                            <span class="icon icon-times"></span>
+                            <input ms-duplex="@sysNews.isOuter" name="isOuter" value="0" type="radio"
+                                   checked="checked">否
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="label">
+                    <label>备注：</label>
+                </div>
+                <div class="field">
+                    <textarea ms-duplex="@sysNews.remark" type="text" class="input" name="remark"
+                              style="height:100px;"></textarea>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="label">
+                    <label></label>
+                </div>
+                <div class="field">
+                    <button ms-on-click="subSysNews($event)" class="button bg-main icon-check-square-o"
+                            type="button">
+                        提交
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+<!--弹窗部分-End-->
+
+</html>

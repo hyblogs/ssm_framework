@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ssm.mapper.SysResourceBtnRoleMapper">
+  <resultMap id="BaseResultMap" type="com.ssm.entity.mapping.SysResourceBtnRole">
+    <!--
+      WARNING - @mbg.generated
+    -->
+    <id column="id" jdbcType="BIGINT" property="id" />
+    <result column="resource_btn_id" jdbcType="BIGINT" property="resourceBtnId" />
+    <result column="role_id" jdbcType="BIGINT" property="roleId" />
+    <result column="link_time" jdbcType="TIMESTAMP" property="linkTime" />
+  </resultMap>
+  <select id="selectByGen">
+    <!-- 
+    WARNING - @mbg.generated  
+    -->  
+    SELECT 
+        id AS id , 
+        resource_btn_id AS resourceBtnId , 
+        role_id AS roleId , 
+        link_time AS linkTime  
+    FROM 
+        sys_resource_btn_role
+  </select>
+</mapper>

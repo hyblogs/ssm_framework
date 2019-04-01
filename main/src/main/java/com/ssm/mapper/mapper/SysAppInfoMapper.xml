@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ssm.mapper.SysAppInfoMapper">
+  <resultMap id="BaseResultMap" type="com.ssm.entity.mapping.SysAppInfo">
+    <!--
+      WARNING - @mbg.generated
+    -->
+    <id column="id" jdbcType="BIGINT" property="id" />
+    <result column="sys_name" jdbcType="VARCHAR" property="sysName" />
+    <result column="sys_name_short" jdbcType="VARCHAR" property="sysNameShort" />
+    <result column="sys_code" jdbcType="VARCHAR" property="sysCode" />
+    <result column="sys_logo" jdbcType="VARCHAR" property="sysLogo" />
+    <result column="sys_records" jdbcType="VARCHAR" property="sysRecords" />
+    <result column="sys_back_url" jdbcType="VARCHAR" property="sysBackUrl" />
+    <result column="sys_site_url" jdbcType="VARCHAR" property="sysSiteUrl" />
+    <result column="state" jdbcType="TINYINT" property="state" />
+    <result column="sys_version" jdbcType="VARCHAR" property="sysVersion" />
+    <result column="create_time" jdbcType="TIMESTAMP" property="createTime" />
+    <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
+    <result column="sys_desc" jdbcType="VARCHAR" property="sysDesc" />
+  </resultMap>
+  <select id="selectByGen">
+    <!-- 
+    WARNING - @mbg.generated  
+    -->  
+    SELECT 
+        id AS id , 
+        sys_name AS sysName , 
+        sys_name_short AS sysNameShort , 
+        sys_code AS sysCode , 
+        sys_logo AS sysLogo , 
+        sys_records AS sysRecords , 
+        sys_back_url AS sysBackUrl , 
+        sys_site_url AS sysSiteUrl , 
+        state AS state , 
+        sys_version AS sysVersion , 
+        create_time AS createTime , 
+        update_time AS updateTime , 
+        sys_desc AS sysDesc  
+    FROM 
+        sys_app_info
+  </select>
+</mapper>

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ssm.mapper.SysModuleMapper">
+  <resultMap id="BaseResultMap" type="com.ssm.entity.mapping.SysModule">
+    <!--
+      WARNING - @mbg.generated
+    -->
+    <id column="id" jdbcType="BIGINT" property="id" />
+    <result column="module_name" jdbcType="VARCHAR" property="moduleName" />
+    <result column="module_desc" jdbcType="VARCHAR" property="moduleDesc" />
+    <result column="module_status" jdbcType="TINYINT" property="moduleStatus" />
+    <result column="module_url" jdbcType="VARCHAR" property="moduleUrl" />
+    <result column="module_icon" jdbcType="VARCHAR" property="moduleIcon" />
+    <result column="module_no" jdbcType="VARCHAR" property="moduleNo" />
+    <result column="remark" jdbcType="VARCHAR" property="remark" />
+  </resultMap>
+  <select id="selectByGen">
+    <!-- 
+    WARNING - @mbg.generated  
+    -->  
+    SELECT 
+        id AS id , 
+        module_name AS moduleName , 
+        module_desc AS moduleDesc , 
+        module_status AS moduleStatus , 
+        module_url AS moduleUrl , 
+        module_icon AS moduleIcon , 
+        module_no AS moduleNo , 
+        remark AS remark  
+    FROM 
+        sys_module
+  </select>
+</mapper>

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ssm.mapper.SysGroupMapper">
+  <resultMap id="BaseResultMap" type="com.ssm.entity.mapping.SysGroup">
+    <!--
+      WARNING - @mbg.generated
+    -->
+    <id column="id" jdbcType="BIGINT" property="id" />
+    <result column="group_name" jdbcType="VARCHAR" property="groupName" />
+    <result column="group_desc" jdbcType="VARCHAR" property="groupDesc" />
+    <result column="group_status" jdbcType="TINYINT" property="groupStatus" />
+    <result column="parent_id" jdbcType="BIGINT" property="parentId" />
+    <result column="group_manager" jdbcType="VARCHAR" property="groupManager" />
+    <result column="group_no" jdbcType="VARCHAR" property="groupNo" />
+    <result column="create_time" jdbcType="TIMESTAMP" property="createTime" />
+    <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
+    <result column="remark" jdbcType="VARCHAR" property="remark" />
+  </resultMap>
+  <select id="selectByGen">
+    <!-- 
+    WARNING - @mbg.generated  
+    -->  
+    SELECT 
+        id AS id , 
+        group_name AS groupName , 
+        group_desc AS groupDesc , 
+        group_status AS groupStatus , 
+        parent_id AS parentId , 
+        group_manager AS groupManager , 
+        group_no AS groupNo , 
+        create_time AS createTime , 
+        update_time AS updateTime , 
+        remark AS remark  
+    FROM 
+        sys_group
+  </select>
+</mapper>

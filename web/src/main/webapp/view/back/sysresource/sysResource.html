@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+    <meta name="renderer" content="webkit">
+    <title>系统栏目列表</title>
+    <link rel="stylesheet" href="./../../../resources/css/pintuer.css">
+    <link rel="stylesheet" href="./../../../resources/css/style.css">
+    <link rel="stylesheet" href="./../../../resources/css/admin.css">
+    <link rel="stylesheet" href="./../../../resources/plugins/layui/css/layui.css">
+
+    <script type="text/javascript" src="./../../../resources/js/jquery.js"></script>
+    <script type="text/javascript" src="./../../../resources/js/pintuer.js"></script>
+    <script type="text/javascript" src="./../../../resources/plugins/layer/layer.js"></script>
+    <script type="text/javascript" src="./../../../resources/plugins/layui/layui.all.js"></script>
+    <script type="text/javascript" src="./../../../resources/js/common.js"></script>
+    <!--页面数据绑定的js-->
+    <script type="text/javascript" src="./../../../resources/js/avalon.js"></script>
+    <script type="text/javascript" src="sysResource.js"></script>
+</head>
+<body>
+<div class="panel admin-panel" ms-controller="sysResource">
+    <div class="panel-head"><strong class="icon-reorder"> 栏目列表</strong></div>
+    <div class="padding border-bottom">
+        <ul class="search" style="padding-left:10px;">
+            <li>
+                <a ms-click="addSysResource($event)" class="button border-yellow" href="javascript:void(0);">
+                    <span class="icon-plus-square-o"></span> 添加栏目
+                </a>
+            </li>
+            <li>搜索：</li>
+            <li>
+                <select ms-duplex="@sysResourceSearchParams.resourceStatus" name="resourceStatus" class="input" style="width:200px; line-height:17px;" ms-on-change="findSysRole()">
+                    <option value="">请选择栏目状态</option>
+                    <option value="0">无效</option>
+                    <option value="1">有效</option>
+                </select>
+            </li>
+            <li>
+                <select ms-duplex="@sysResourceSearchParams.parentId" name="parentId" class="input select-search">
+                    <option value="">请选择父级栏目</option>
+                    <option value="0">所有父级栏目</option>
+                    <option ms-for="el in @parentResourceList" ms-attr="{value:el.id}">{{el.resourceName}}</option>
+                </select>
+            </li>
+            <li>
+                <input ms-duplex="@sysResourceSearchParams.resourceName" type="text" placeholder="请输入要搜索的栏目名称" name="resourceName" class="input" style="width:250px; line-height:17px;display:inline-block"/>
+                <a href="javascript:void(0)" class="button border-main icon-search my-search-btn" ms-on-click="findSysResource()"> 搜索</a>
+            </li>
+        </ul>
+    </div>
+    <table class="table table-hover text-center">
+        <tr>
+            <th>栏目名称</th>
+            <th>栏目编号</th>
+            <th>栏目序号</th>
+            <th>栏目图标</th>
+            <th>栏目状态</th>
+            <th>父级栏目ID</th>
+            <th>链接地址</th>
+            <th width="300">备注</th>
+            <th width="250">操作</th>
+        </tr>
+
+        <!--ms-for:(index,item) in @sysResourceList-->
+        <tr>
+            <td><font color="#00CC99">{{item.resourceName}}</font></td>
+            <td>{{item.resourceIcon}}</td>
+            <td>{{item.resourceSort}}</td>
+            <td>
+                <span ms-if="item.columnIcon != null && item.columnIcon != ''" ms-attr="{class:@item.columnIcon}"></span>
+            </td>
+            <td>
+                <span ms-click="changeState(item.id, item.resourceStatus)" ms-if="item.resourceStatus == 1" class="badge bg-sub print">显示</span>
+                <span ms-click="changeState(item.id, item.resourceStatus)" ms-if="item.resourceStatus == 0" class="badge bg-gray print">隐藏</span>
+            </td>
+            <td>{{item.parentId}}</td>
+            <td>{{item.resourceUrl}}</td>
+            <td>{{item.resourceDesc}}</td>
+            <td>
+                <div class="button-group">
+                    <a ms-on-click="editSysResourceById(item.id)" type="button" class="button border-main" href="javascript:void(0)">
+                        <span class="icon-edit"></span>修改
+                    </a>
+                    <a ms-on-click="delSysResourceById(item.id)" type="button" class="button border-red" href="javascript:void(0)">
+                        <span class="icon-trash-o"></span> 删除
+                    </a>
+                </div>
+            </td>
+        </tr>
+        <!--ms-for-end:-->
+
+        <tr>
+            <td colspan="10">
+                <div style="text-align: center;" id="sysResourcePage"></div>
+            </td>
+        </tr>
+    </table>
+</div>
+</body>
+
+<!--弹窗部分-Start-->
+<div class="panel admin-panel margin-top" ms-controller="editSysResource" id="editSysResource" hidden="hidden">
+    <div class="body-content">
+        <form class="form-x">
+            <input ms-duplex="@sysResource.id" type="hidden" name="id" value=""/>
+            <div class="form-group">
+                <div class="label">
+                    <label>父级栏目：</label>
+                </div>
+                <div class="field">
+                    <select ms-duplex="@sysResource.parentId" name="parentId" class="input w50">
+                        <option value="0">父级栏目</option>
+                        <option ms-for="el in @parentColumnList" ms-attr="{value:el.id}">{{el.resourceName}}</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="label">
+                    <label>栏目名称：</label>
+                </div>
+                <div class="field">
+                    <input ms-duplex="@sysResource.resourceName" type="text" name="resourceName" class="input w50"
+                           data-validate="required:请输入栏目名称!"/>
+                    <div class="tips"></div>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="label">
+                    <label>栏目编号：</label>
+                </div>
+                <div class="field">
+                    <input ms-duplex="@sysResource.resourceIcon" type="text" name="resourceIcon" class="input w50"
+                           data-validate="required:请输入栏目编号(纯英文或英文+数字)!"/>
+                    <div class="tips"></div>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="label">
+                    <label>栏目图标：</label>
+                </div>
+                <div class="field">
+                    <input ms-duplex="@sysResource.columnIcon" type="text" name="columnIcon" class="input w50"/>
+                    <input type="button" class="button bg-blue margin-left" ms-click="showPintuerIcons($event)" value="+ 浏览图标" style="float:left;">
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="label">
+                    <label>栏目地址：</label>
+                </div>
+                <div class="field">
+                    <input ms-duplex="@sysResource.resourceUrl" type="text" name="resourceUrl" class="input w50"
+                           data-validate="required:请输入加载路径!"/>
+                    <div class="tips"></div>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="label">
+                    <label>栏目描述：</label>
+                </div>
+                <div class="field">
+                    <textarea ms-duplex="@sysResource.resourceDesc" type="text" class="input" name="resourceDesc"
+                              style="height:100px;"></textarea>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <div class="label">
+                    <label>是否显示：</label>
+                </div>
+                <div class="field">
+                    <div class="button-group radio">
+
+                        <label class="button active" ms-if="@sysResource.resourceStatus == 1">
+                            <span class="icon icon-check"></span>
+                            <input ms-duplex="@sysResource.resourceStatus" name="resourceStatus" value="1" type="radio"
+                                   checked="checked">是
+                        </label>
+                        <label class="button" ms-if="@sysResource.resourceStatus == 0 || @sysResource.resourceStatus == -1">
+                            <span class="icon icon-check"></span>
+                            <input ms-duplex="@sysResource.resourceStatus" name="resourceStatus" value="1" type="radio"
+                                   checked="checked">是
+                        </label>
+                        <label class="button active" ms-if="@sysResource.resourceStatus == 0">
+                            <span class="icon icon-times"></span>
+                            <input ms-duplex="@sysResource.resourceStatus" name="resourceStatus" value="0" type="radio"
+                                   checked="checked">否
+                        </label>
+                        <label class="button" ms-if="@sysResource.resourceStatus == 1 || @sysResource.resourceStatus == -1">
+                            <span class="icon icon-times"></span>
+                            <input ms-duplex="@sysResource.resourceStatus" name="resourceStatus" value="0" type="radio"
+                                   checked="checked">否
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="label">
+                    <label>排序序号：</label>
+                </div>
+                <div class="field">
+                    <input ms-duplex="@sysResource.resourceSort" type="text" class="input w50" name="resourceSort"
+                           value="0" data-validate="required:,number:排序必须为数字"/>
+                    <div class="tips"></div>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="label">
+                    <label></label>
+                </div>
+                <div class="field">
+                    <button ms-click="subSysResource($event)" class="button bg-main icon-check-square-o" type="button">
+                        提交
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!--系统图标列表-->
+<div id="pintuer-icons" ms-controller="pintuerIcons" hidden="hidden">
+    <h3 class="doc-title" style="margin-top: 10px;">
+        网络应用图标
+    </h3>
+    <div class="doc-input">
+        <ul class="doc-icons">
+            <li><span ms-click="getIconInfo($event)" class="icon-adjust"></span><span>icon-adjust</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-anchor"></span><span>icon-anchor</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-archive"></span><span>icon-archive</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-arrows"></span><span>icon-arrows</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-arrows-h"></span><span>icon-arrows-h</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-arrows-v"></span><span>icon-arrows-v</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-asterisk"></span><span>icon-asterisk</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-automobile"></span><span>icon-automobile (alias)</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-ban"></span><span>icon-ban</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-bank"></span><span>icon-bank (alias)</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-bar-chart-o"></span><span>icon-bar-chart-o</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-barcode"></span><span>icon-barcode</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-bars"></span><span>icon-bars</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-beer"></span><span>icon-beer</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-bell"></span><span>icon-bell</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-bell-o"></span><span>icon-bell-o</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-bolt"></span><span>icon-bolt</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-bomb"></span><span>icon-bomb</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-book"></span><span>icon-book</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-bookmark"></span><span>icon-bookmark</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-bookmark-o"></span><span>icon-bookmark-o</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-briefcase"></span><span>icon-briefcase</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-bug"></span><span>icon-bug</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-building"></span><span>icon-building</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-building-o"></span><span>icon-building-o</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-bullhorn"></span><span>icon-bullhorn</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-bullseye"></span><span>icon-bullseye</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-cab"></span><span>icon-cab (alias)</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-calendar"></span><span>icon-calendar</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-calendar-o"></span><span>icon-calendar-o</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-camera"></span><span>icon-camera</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-camera-retro"></span><span>icon-camera-retro</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-car"></span><span>icon-car</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-caret-square-o-down"></span><span>icon-caret-square-o-down</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-caret-square-o-left"></span><span>icon-square-o-left</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-caret-square-o-right"></span><span>icon-square-o-right</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-caret-square-o-up"></span><span>icon-caret-square-o-up</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-certificate"></span><span>icon-certificate</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-check"></span><span>icon-check</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-check-circle"></span><span>icon-check-circle</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-check-circle-o"></span><span>icon-check-circle-o</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-check-square"></span><span>icon-check-square</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-check-square-o"></span><span>icon-check-square-o</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-child"></span><span>icon-child</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-circle"></span><span>icon-circle</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-circle-o"></span><span>icon-circle-o</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-circle-o-notch"></span><span>icon-circle-o-notch</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-circle-thin"></span><span>icon-circle-thin</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-clock-o"></span><span>icon-clock-o</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-cloud"></span><span>icon-cloud</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-cloud-download"></span><span>icon-cloud-download</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-cloud-upload"></span><span>icon-cloud-upload</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-code"></span><span>icon-code</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-code-fork"></span><span>icon-code-fork</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-coffee"></span><span>icon-coffee</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-cog"></span><span>icon-cog</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-cogs"></span><span>icon-cogs</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-comment"></span><span>icon-comment</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-comment-o"></span><span>icon-comment-o</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-comments"></span><span>icon-comments</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-comments-o"></span><span>icon-comments-o</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-compass"></span><span>icon-compass</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-credit-card"></span><span>icon-credit-card</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-crop"></span><span>icon-crop</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-crosshairs"></span><span>icon-crosshairs</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-cube"></span><span>icon-cube</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-cubes"></span><span>icon-cubes</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-cutlery"></span><span>icon-cutlery</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-dashboard"></span><span>icon-dashboard (alias)</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-database"></span><span>icon-database</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-desktop"></span><span>icon-desktop</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-dot-circle-o"></span><span>icon-dot-circle-o</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-download"></span><span>icon-download</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-edit"></span><span>icon-edit (alias)</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-ellipsis-h"></span><span>icon-ellipsis-h</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-ellipsis-v"></span><span>icon-ellipsis-v</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-envelope"></span><span>icon-envelope</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-envelope-o"></span><span>icon-envelope-o</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-envelope-square"></span><span>icon-envelope-square</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-eraser"></span><span>icon-eraser</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-exchange"></span><span>icon-exchange</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-exclamation"></span><span>icon-exclamation</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-exclamation-circle"></span><span>icon-exclamation-circle</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-exclamation-triangle"></span><span>icon-exclamation-triangle</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-external-link"></span><span>icon-external-link</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-external-link-square"></span><span>icon-external-link-square</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-eye"></span><span>icon-eye</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-eye-slash"></span><span>icon-eye-slash</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-fax"></span><span>icon-fax</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-female"></span><span>icon-female</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-fighter-jet"></span><span>icon-fighter-jet</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-file-archive-o"></span><span>icon-file-archive-o</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-file-audio-o"></span><span>icon-file-audio-o</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-file-code-o"></span><span>icon-file-code-o</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-file-excel-o"></span><span>icon-file-excel-o</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-file-image-o"></span><span>icon-file-image-o</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-file-movie-o"></span><span>icon-file-movie-o (alias)</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-file-pdf-o"></span><span>icon-file-pdf-o</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-file-photo-o"></span><span>icon-file-photo-o (alias)</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-file-picture-o"></span><span>icon-file-picture-o (alias)</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-file-powerpoint-o"></span><span>icon-file-powerpoint-o</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-file-sound-o"></span><span>icon-file-sound-o (alias)</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-file-video-o"></span><span>icon-file-video-o</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-file-word-o"></span><span>icon-file-word-o</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-file-zip-o"></span><span>icon-file-zip-o (alias)</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-film"></span><span>icon-film</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-filter"></span><span>icon-filter</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-fire"></span><span>icon-fire</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-fire-extinguisher"></span><span>icon-fire-extinguisher</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-flag"></span><span>icon-flag</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-flag-checkered"></span><span>icon-flag-checkered</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-flag-o"></span><span>icon-flag-o</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-flash"></span><span>icon-flash (alias)</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-flask"></span><span>icon-flask</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-folder"></span><span>icon-folder</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-folder-o"></span><span>icon-folder-o</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-folder-open"></span><span>icon-folder-open</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-folder-open-o"></span><span>icon-folder-open-o</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-frown-o"></span><span>icon-frown-o</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-gamepad"></span><span>icon-gamepad</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-gavel"></span><span>icon-gavel</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-gear"></span><span>icon-gear (alias)</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-gears"></span><span>icon-gears (alias)</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-gift"></span><span>icon-gift</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-glass"></span><span>icon-glass</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-globe"></span><span>icon-globe</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-graduation-cap"></span><span>icon-graduation-cap</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-group"></span><span>icon-group (alias)</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-hdd-o"></span><span>icon-hdd-o</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-headphones"></span><span>icon-headphones</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-heart"></span><span>icon-heart</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-heart-o"></span><span>icon-heart-o</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-history"></span><span>icon-history</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-home"></span><span>icon-home</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-image"></span><span>icon-image (alias)</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-inbox"></span><span>icon-inbox</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-info"></span><span>icon-info</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-info-circle"></span><span>icon-info-circle</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-institution"></span><span>icon-institution (alias)</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-key"></span><span>icon-key</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-keyboard-o"></span><span>icon-keyboard-o</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-language"></span><span>icon-language</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-laptop"></span><span>icon-laptop</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-leaf"></span><span>icon-leaf</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-legal"></span><span>icon-legal (alias)</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-lemon-o"></span><span>icon-lemon-o</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-level-down"></span><span>icon-level-down</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-level-up"></span><span>icon-level-up</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-life-bouy"></span><span>icon-life-bouy (alias)</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-life-ring"></span><span>icon-life-ring</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-life-saver"></span><span>icon-life-saver (alias)</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-lightbulb-o"></span><span>icon-lightbulb-o</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-location-arrow"></span><span>icon-location-arrow</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-lock"></span><span>icon-lock</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-magic"></span><span>icon-magic</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-magnet"></span><span>icon-magnet</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-mail-forward"></span><span>icon-mail-forward (alias)</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-mail-reply"></span><span>icon-mail-reply (alias)</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-mail-reply-all"></span><span>icon-mail-reply-all (alias)</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-male"></span><span>icon-male</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-map-marker"></span><span>icon-map-marker</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-meh-o"></span><span>icon-meh-o</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-microphone"></span><span>icon-microphone</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-microphone-slash"></span><span>icon-microphone-slash</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-minus"></span><span>icon-minus</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-minus-circle"></span><span>icon-minus-circle</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-minus-square"></span><span>icon-minus-square</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-minus-square-o"></span><span>icon-minus-square-o</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-mobile"></span><span>icon-mobile</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-mobile-phone"></span><span>icon-mobile-phone (alias)</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-money"></span><span>icon-money</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-moon-o"></span><span>icon-moon-o</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-mortar-board"></span><span>icon-mortar-board (alias)</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-music"></span><span>icon-music</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-navicon"></span><span>icon-navicon (alias)</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-paper-plane"></span><span>icon-paper-plane</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-paper-plane-o"></span><span>icon-paper-plane-o</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-paw"></span><span>icon-paw</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-pencil"></span><span>icon-pencil</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-pencil-square"></span><span>icon-pencil-square</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-pencil-square-o"></span><span>icon-pencil-square-o</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-phone"></span><span>icon-phone</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-phone-square"></span><span>icon-phone-square</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-photo"></span><span>icon-photo (alias)</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-picture-o"></span><span>icon-picture-o</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-plane"></span><span>icon-plane</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-plus"></span><span>icon-plus</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-plus-circle"></span><span>icon-plus-circle</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-plus-square"></span><span>icon-plus-square</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-plus-square-o"></span><span>icon-plus-square-o</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-power-off"></span><span>icon-power-off</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-print"></span><span>icon-print</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-puzzle-piece"></span><span>icon-puzzle-piece</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-qrcode"></span><span>icon-qrcode</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-question"></span><span>icon-question</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-question-circle"></span><span>icon-question-circle</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-quote-left"></span><span>icon-quote-left</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-quote-right"></span><span>icon-quote-right</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-random"></span><span>icon-random</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-recycle"></span><span>icon-recycle</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-refresh"></span><span>icon-refresh</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-reorder"></span><span>icon-reorder (alias)</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-reply"></span><span>icon-reply</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-reply-all"></span><span>icon-reply-all</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-retweet"></span><span>icon-retweet</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-road"></span><span>icon-road</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-rocket"></span><span>icon-rocket</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-rss"></span><span>icon-rss</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-rss-square"></span><span>icon-rss-square</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-search"></span><span>icon-search</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-search-minus"></span><span>icon-search-minus</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-search-plus"></span><span>icon-search-plus</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-send"></span><span>icon-send (alias)</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-send-o"></span><span>icon-send-o (alias)</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-share"></span><span>icon-share</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-share-alt"></span><span>icon-share-alt</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-share-alt-square"></span><span>icon-share-alt-square</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-share-square"></span><span>icon-share-square</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-share-square-o"></span><span>icon-share-square-o</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-shield"></span><span>icon-shield</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-shopping-cart"></span><span>icon-shopping-cart</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-sign-in"></span><span>icon-sign-in</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-sign-out"></span><span>icon-sign-out</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-signal"></span><span>icon-signal</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-sitemap"></span><span>icon-sitemap</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-sliders"></span><span>icon-sliders</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-smile-o"></span><span>icon-smile-o</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-sort"></span><span>icon-sort</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-sort-alpha-asc"></span><span>icon-sort-alpha-asc</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-sort-alpha-desc"></span><span>icon-sort-alpha-desc</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-sort-amount-asc"></span><span>icon-sort-amount-asc</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-sort-amount-desc"></span><span>icon-sort-amount-desc</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-sort-asc"></span><span>icon-sort-asc</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-sort-desc"></span><span>icon-sort-desc</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-sort-down"></span><span>icon-sort-down (alias)</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-sort-numeric-asc"></span><span>icon-sort-numeric-asc</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-sort-numeric-desc"></span><span>icon-sort-numeric-desc</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-sort-up"></span><span>icon-sort-up (alias)</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-space-shuttle"></span><span>icon-space-shuttle</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-spinner"></span><span>icon-spinner</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-spoon"></span><span>icon-spoon</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-square"></span><span>icon-square</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-square-o"></span><span>icon-square-o</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-star"></span><span>icon-star</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-star-half"></span><span>icon-star-half</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-star-half-empty"></span><span>icon-star-half-empty (alias)</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-star-half-full"></span><span>icon-star-half-full (alias)</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-star-half-o"></span><span>icon-star-half-o</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-star-o"></span><span>icon-star-o</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-suitcase"></span><span>icon-suitcase</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-sun-o"></span><span>icon-sun-o</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-support"></span><span>icon-support (alias)</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-tablet"></span><span>icon-tablet</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-tachometer"></span><span>icon-tachometer</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-tag"></span><span>icon-tag</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-tags"></span><span>icon-tags</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-tasks"></span><span>icon-tasks</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-taxi"></span><span>icon-taxi</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-terminal"></span><span>icon-terminal</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-thumb-tack"></span><span>icon-thumb-tack</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-thumbs-down"></span><span>icon-thumbs-down</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-thumbs-o-down"></span><span>icon-thumbs-o-down</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-thumbs-o-up"></span><span>icon-thumbs-o-up</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-thumbs-up"></span><span>icon-thumbs-up</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-ticket"></span><span>icon-ticket</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-times"></span><span>icon-times</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-times-circle"></span><span>icon-times-circle</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-times-circle-o"></span><span>icon-times-circle-o</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-tint"></span><span>icon-tint</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-toggle-down"></span><span>icon-toggle-down (alias)</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-toggle-left"></span><span>icon-toggle-right (alias)</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-toggle-right"></span><span>icon-toggle-right (alias)</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-toggle-up"></span><span>icon-toggle-up (alias)</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-trash-o"></span><span>icon-trash-o</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-tree"></span><span>icon-tree</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-trophy"></span><span>icon-trophy</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-truck"></span><span>icon-truck</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-umbrella"></span><span>icon-umbrella</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-university"></span><span>icon-university</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-unlock"></span><span>icon-unlock</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-unlock-alt"></span><span>icon-unlock-alt</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-unsorted"></span><span>icon-unsorted (alias)</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-upload"></span><span>icon-upload</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-user"></span><span>icon-user</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-users"></span><span>icon-users</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-video-camera"></span><span>icon-video-camera</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-volume-down"></span><span>icon-volume-down</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-volume-off"></span><span>icon-volume-off</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-volume-up"></span><span>icon-volume-up</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-warning"></span><span>icon-warning (alias)</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-wheelchair"></span><span>icon-wheelchair</span></li>
+            <li><span ms-click="getIconInfo($event)" class="icon-wrench"></span><span>icon-wrench</span></li>
+        </ul>
+    </div>
+
+    <h3 class="doc-title">
+        文件类型图标
+    </h3>
+    <div class="doc-input">
+        <ul class="doc-icons">
+            <li><span ms-click="getIconInfo($event)" class="icon-file"></span><span>icon-file</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-file-archive-o"></span><span>icon-file-archive-o</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-file-audio-o"></span><span>icon-file-audio-o</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-file-code-o"></span><span>icon-file-code-o</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-file-excel-o"></span><span>icon-file-excel-o</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-file-image-o"></span><span>icon-file-image-o</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-file-movie-o"></span><span>icon-file-movie-o(alias)</span>
+            </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-file-o"></span><span>icon-file-o</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-file-pdf-o"></span><span>icon-file-pdf-o</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-file-photo-o"></span><span>icon-file-photo-o(alias)</span>
+            </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-file-picture-o"></span><span>icon-file-picture-o(alias)</span>
+            </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-file-powerpoint-o"></span><span>icon-file-powerpoint-o</span>
+            </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-file-sound-o"></span><span>icon-file-sound-o(alias)</span>
+            </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-file-text"></span><span>icon-file-text</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-file-text-o"></span><span>icon-file-text-o</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-file-video-o"></span><span>icon-file-video-o</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-file-word-o"></span><span>icon-file-word-o</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-file-zip-o"></span><span>icon-file-zip-o(alias)</span> </li>
+        </ul>
+    </div>
+    <h3 class="doc-title">
+        旋转图标
+    </h3>
+    <div class="doc-input">
+        <ul class="doc-icons">
+            <li><span ms-click="getIconInfo($event)" class="icon-circle-o-notch"></span><span>icon-circle-o-notch</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-cog"></span><span>icon-cog</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-gear"></span><span>icon-gear (alias)</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-refresh"></span><span>icon-refresh</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-spinner"></span><span>icon-spinner</span> </li>
+        </ul>
+    </div>
+    <h3 class="doc-title">
+        表单控制图标
+    </h3>
+    <div class="doc-input">
+        <ul class="doc-icons">
+            <li><span ms-click="getIconInfo($event)" class="icon-check-square"></span><span>icon-check-square</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-check-square-o"></span><span>icon-check-square-o</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-circle"></span><span>icon-circle</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-circle-o"></span><span>icon-circle-o</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-dot-circle-o"></span><span>icon-dot-circle-o</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-minus-square"></span><span>icon-minus-square</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-minus-square-o"></span><span>icon-minus-square-o</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-plus-square"></span><span>icon-plus-square</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-plus-square-o"></span><span>icon-plus-square-o</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-square"></span><span>icon-square</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-square-o"></span><span>icon-square-o</span> </li>
+        </ul>
+    </div>
+    <h3 class="doc-title">
+        货币图标
+    </h3>
+    <div class="doc-input">
+        <ul class="doc-icons">
+            <li><span ms-click="getIconInfo($event)" class="icon-bitcoin"></span><span>icon-icon-bitcoin (alias)</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-btc"></span><span>icon-btc</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-cny"></span><span>icon-cny (alias)</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-dollar"></span><span>icon-dollar (alias)</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-eur"></span><span>icon-</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-euro"></span><span>icon-euro (alias)</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-gbp"></span><span>icon-gbp</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-inr"></span><span>icon-inr</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-jpy"></span><span>icon-jpy</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-krw"></span><span>icon-krw</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-money"></span><span>icon-money</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-rmb"></span><span>icon-rmb (alias)</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-rouble"></span><span>icon-rouble (alias)</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-rub"></span><span>icon-rub</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-ruble"></span><span>icon-ruble (alias)</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-rupee"></span><span>icon-rupee (alias)</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-try"></span><span>icon-try</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-turkish-lira"></span><span>icon-turkish-lira (alias)</span>
+            </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-usd"></span><span>icon-usd</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-won"></span><span>icon-won (alias)</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-yen"></span><span>icon-yen (alias)</span> </li>
+        </ul>
+    </div>
+    <h3 class="doc-title">
+        编辑图标
+    </h3>
+    <div class="doc-input">
+        <ul class="doc-icons">
+            <li><span ms-click="getIconInfo($event)" class="icon-align-center"></span><span>icon-align-center</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-align-justify"></span><span>icon-align-justify</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-align-left"></span><span>icon-align-left</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-align-right"></span><span>icon-align-right</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-bold"></span><span>icon-bold</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-chain"></span><span>icon-chain (alias)</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-chain-broken"></span><span>icon-chain-broken</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-clipboard"></span><span>icon-clipboard</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-columns"></span><span>icon-columns</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-copy"></span><span>icon-copy (alias)</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-cut"></span><span>icon-cut (alias)</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-dedent"></span><span>icon-dedent (alias)</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-eraser"></span><span>icon-eraser</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-file"></span><span>icon-file</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-file-o"></span><span>icon-file-o</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-file-text"></span><span>icon-file-text</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-file-text-o"></span><span>icon-file-text-o</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-files-o"></span><span>icon-files-o</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-floppy-o"></span><span>icon-floppy-o</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-font"></span><span>icon-font</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-header"></span><span>icon-header</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-indent"></span><span>icon-indent</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-italic"></span><span>icon-italic</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-link"></span><span>icon-link</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-list"></span><span>icon-list</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-list-alt"></span><span>icon-list-alt</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-list-ol"></span><span>icon-list-ol</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-list-ul"></span><span>icon-list-ul</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-outdent"></span><span>icon-outdent</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-paperclip"></span><span>icon-paperclip</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-paragraph"></span><span>icon-paragraph</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-paste"></span><span>icon-paste (alias)</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-repeat"></span><span>icon-repeat</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-rotate-left"></span><span>icon-rotate-left (alias)</span>
+            </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-rotate-right"></span><span>icon-rotate-right (alias)</span>
+            </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-save"></span><span>icon-save (alias)</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-scissors"></span><span>icon-scissors</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-strikethrough"></span><span>icon-strikethrough</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-subscript"></span><span>icon-subscript</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-superscript"></span><span>icon-superscript</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-table"></span><span>icon-table</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-text-height"></span><span>icon-text-height</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-text-width"></span><span>icon-text-width</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-th"></span><span>icon-th</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-th-large"></span><span>icon-th-large</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-th-list"></span><span>icon-th-list</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-underline"></span><span>icon-underline</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-undo"></span><span>icon-undo</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-unlink"></span><span>icon-unlink (alias)</span> </li>
+        </ul>
+    </div>
+    <h3 class="doc-title">
+        指向图标
+    </h3>
+    <div class="doc-input">
+        <ul class="doc-icons">
+            <li><span ms-click="getIconInfo($event)" class="icon-angle-double-down"></span><span>icon-angle-double-down</span>
+            </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-angle-double-left"></span><span>icon-angle-double-left</span>
+            </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-angle-double-right"></span><span>icon-angle-double-right</span>
+            </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-angle-double-up"></span><span>icon-angle-double-up</span>
+            </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-angle-down"></span><span>icon-angle-down</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-angle-left"></span><span>icon-angle-left</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-angle-right"></span><span>icon-angle-right</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-angle-up"></span><span>icon-angle-up</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-arrow-circle-down"></span><span>icon-arrow-circle-down</span>
+            </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-arrow-circle-left"></span><span>icon-arrow-circle-left</span>
+            </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-arrow-circle-o-down"></span><span>icon-arrow-circle-o-down</span>
+            </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-arrow-circle-o-left"></span><span>icon-arrow-circle-o-left</span>
+            </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-arrow-circle-o-right"></span><span>icon-arrow-circle-o-right</span>
+            </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-arrow-circle-o-up"></span><span>icon-arrow-circle-o-up</span>
+            </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-arrow-circle-right"></span><span>icon-arrow-circle-right</span>
+            </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-arrow-circle-up"></span><span>icon-arrow-circle-up</span>
+            </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-arrow-down"></span><span>icon-arrow-down</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-arrow-left"></span><span>icon-arrow-left</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-arrow-right"></span><span>icon-arrow-right</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-arrow-up"></span><span>icon-arrow-up</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-arrows"></span><span>icon-arrows</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-arrows-alt"></span><span>icon-arrows-alt</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-arrows-h"></span><span>icon-arrows-h</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-arrows-v"></span><span>icon-arrows-v</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-caret-down"></span><span>icon-caret-down</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-caret-left"></span><span>icon-caret-left</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-caret-right"></span><span>icon-caret-right</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-caret-square-o-down"></span><span>icon-caret-square-o-down</span>
+            </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-caret-square-o-left"></span><span>icon-caret-square-o-left</span>
+            </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-caret-square-o-right"></span><span>icon-caret-square-o-right</span>
+            </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-caret-square-o-up"></span><span>icon-caret-square-o-up</span>
+            </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-caret-up"></span><span>icon-caret-up</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-chevron-circle-down"></span><span>icon-chevron-circle-down</span>
+            </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-chevron-circle-left"></span><span>icon-chevron-circle-left</span>
+            </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-chevron-circle-right"></span><span>icon-chevron-circle-right</span>
+            </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-chevron-circle-up"></span><span>icon-chevron-circle-up</span>
+            </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-chevron-down"></span><span>icon-chevron-down</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-chevron-left"></span><span>icon-chevron-left</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-chevron-right"></span><span>icon-chevron-right</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-chevron-up"></span><span>icon-chevron-up</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-hand-o-down"></span><span>icon-hand-o-down</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-hand-o-left"></span><span>icon-hand-o-left</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-hand-o-right"></span><span>icon-hand-o-right</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-hand-o-up"></span><span>icon-hand-o-up</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-long-arrow-down"></span><span>icon-long-arrow-down</span>
+            </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-long-arrow-left"></span><span>icon-long-arrow-left</span>
+            </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-long-arrow-right"></span><span>icon-long-arrow-right</span>
+            </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-long-arrow-up"></span><span>icon-long-arrow-up</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-toggle-down"></span><span>icon-toggle-down (alias)</span>
+            </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-toggle-left"></span><span>icon-toggle-left (alias)</span>
+            </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-toggle-right"></span><span>icon-toggle-right (alias)</span>
+            </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-toggle-up"></span><span>icon-toggle-up (alias)</span> </li>
+        </ul>
+    </div>
+    <h3 class="doc-title">
+        播放图标
+    </h3>
+    <div class="doc-input">
+        <ul class="doc-icons">
+            <li><span ms-click="getIconInfo($event)" class="icon-arrows-alt"></span><span>icon-arrows-alt</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-backward"></span><span>icon-backward</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-compress"></span><span>icon-compress</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-eject"></span><span>icon-eject</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-expand"></span><span>icon-expand</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-fast-backward"></span><span>icon-fast-backward</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-fast-forward"></span><span>icon-fast-forward</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-forward"></span><span>icon-forward</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-pause"></span><span>icon-pause</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-play"></span><span>icon-play</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-play-circle"></span><span>icon-play-circle</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-play-circle-o"></span><span>icon-play-circle-o</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-step-backward"></span><span>icon-step-backward</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-step-forward"></span><span>icon-step-forward</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-stop"></span><span>icon-stop</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-youtube-play"></span><span>icon-youtube-play</span> </li>
+        </ul>
+    </div>
+    <h3 class="doc-title">
+        医疗图标
+    </h3>
+    <div class="doc-input">
+        <ul class="doc-icons">
+            <li><span ms-click="getIconInfo($event)" class="icon-ambulance"></span><span>icon-ambulance</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-h-square"></span><span>icon-h-square</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-hospital-o"></span><span>icon-hospital-o</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-medkit"></span><span>icon-medkit</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-plus-square"></span><span>icon-plus-square</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-stethoscope"></span><span>icon-stethoscope</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-user-md"></span><span>icon-user-md</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-wheelchair"></span><span>icon-wheelchair</span> </li>
+        </ul>
+    </div>
+    <h3 class="doc-title">
+        品牌图标
+    </h3>
+    <div class="doc-input">
+        <ul class="doc-icons">
+            <li><span ms-click="getIconInfo($event)" class="icon-adn"></span><span>icon-adn</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-android"></span><span>icon-android</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-apple"></span><span>icon-apple</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-behance"></span><span>icon-behance</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-behance-square"></span><span>icon-behance-square</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-bitbucket"></span><span>icon-bitbucket</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-bitbucket-square"></span><span>icon-bitbucket-square</span>
+            </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-bitcoin"></span><span>icon-bitcoin (alias)</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-btc"></span><span>icon-btc</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-codepen"></span><span>icon-codepen</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-css3"></span><span>icon-css3</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-delicious"></span><span>icon-delicious</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-deviantart"></span><span>icon-deviantart</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-digg"></span><span>icon-digg</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-dribbble"></span><span>icon-dribbble</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-dropbox"></span><span>icon-dropbox</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-drupal"></span><span>icon-drupal</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-empire"></span><span>icon-empire</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-facebook"></span><span>icon-facebook</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-facebook-square"></span><span>icon-facebook-square</span>
+            </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-flickr"></span><span>icon-flickr</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-foursquare"></span><span>icon-foursquare</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-ge"></span><span>icon-ge (alias)</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-git"></span><span>icon-git</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-git-square"></span><span>icon-git-square</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-github"></span><span>icon-github</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-github-alt"></span><span>icon-github-alt</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-github-square"></span><span>icon-github-square</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-gittip"></span><span>icon-gittip</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-google"></span><span>icon-google</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-google-plus"></span><span>icon-google-plus</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-google-plus-square"></span><span>icon-</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-hacker-news"></span><span>icon-hacker-news</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-html5"></span><span>icon-html5</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-instagram"></span><span>icon-instagram</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-joomla"></span><span>icon-joomla</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-jsfiddle"></span><span>icon-jsfiddle</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-linkedin"></span><span>icon-linkedin</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-linkedin-square"></span><span>icon-linkedin-square</span>
+            </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-linux"></span><span>icon-linux</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-maxcdn"></span><span>icon-maxcdn</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-openid"></span><span>icon-openid</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-pagelines"></span><span>icon-pagelines</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-pied-piper"></span><span>icon-pied-piper</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-pied-piper-alt"></span><span>icon-pied-piper-alt</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-pied-piper-square"></span><span>icon-pied-piper-square (alias)</span>
+            </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-pinterest"></span><span>icon-pinterest</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-pinterest-square"></span><span>icon-pinterest-square</span>
+            </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-qq"></span><span>icon-qq</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-ra"></span><span>icon-ra (alias)</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-rebel"></span><span>icon-rebel</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-reddit"></span><span>icon-reddit</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-reddit-square"></span><span>icon-reddit-square</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-renren"></span><span>icon-renren</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-share-alt"></span><span>icon-share-alt</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-share-alt-square"></span><span>icon-share-alt-square</span>
+            </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-skype"></span><span>icon-skype</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-slack"></span><span>icon-slack</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-soundcloud"></span><span>icon-soundcloud</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-spotify"></span><span>icon-spotify</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-stack-exchange"></span><span>icon-stack-exchange</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-stack-overflow"></span><span>icon-stack-overflow</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-steam"></span><span>icon-steam</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-steam-square"></span><span>icon-steam-square</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-stumbleupon"></span><span>icon-stumbleupon</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-stumbleupon-circle"></span><span>icon-stumbleupon-circle</span>
+            </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-tencent-weibo"></span><span>icon-tencent-weibo</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-trello"></span><span>icon-trello</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-tumblr"></span><span>icon-tumblr</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-tumblr-square"></span><span>icon-tumblr-square</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-twitter"></span><span>icon-twitter</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-twitter-square"></span><span>icon-twitter-square</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-vimeo-square"></span><span>icon-vimeo-square</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-vine"></span><span>icon-vine</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-vk"></span><span>icon-vk</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-wechat"></span><span>icon-wechat (alias)</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-weibo"></span><span>icon-weibo</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-weixin"></span><span>icon-weixin</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-windows"></span><span>icon-windows</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-wordpress"></span><span>icon-wordpress</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-xing"></span><span>icon-xing</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-xing-square"></span><span>icon-xing-square</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-yahoo"></span><span>icon-yahoo</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-youtube"></span><span>icon-youtube</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-youtube-play"></span><span>icon-youtube-play</span> </li>
+            <li><span ms-click="getIconInfo($event)" class="icon-youtube-square"></span><span>icon-youtube-square</span> </li>
+        </ul>
+    </div>
+</div>
+<!--弹窗部分-End-->
+</html>

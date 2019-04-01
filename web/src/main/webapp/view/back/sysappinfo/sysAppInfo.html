@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+    <meta name="renderer" content="webkit">
+    <title>网站基本信息</title>
+    <link rel="stylesheet" href="./../../css/pintuer.css">
+    <link rel="stylesheet" href="./../../css/style.css">
+    <link rel="stylesheet" href="./../../css/admin.css">
+    <link rel="stylesheet" href="./../../layui/css/layui.css">
+
+    <script type="text/javascript" src="./../../js/jquery.js"></script>
+    <script type="text/javascript" src="./../../js/pintuer.js"></script>
+    <script type="text/javascript" src="./../../layer/layer.js"></script>
+    <script type="text/javascript" src="./../../layui/layui.all.js"></script>
+    <script type="text/javascript" src="./../../js/common.js"></script>
+    <!--页面数据绑定的js-->
+    <script type="text/javascript" src="./../../js/avalon.js"></script>
+    <script type="text/javascript" src="sysAppInfo.js"></script>
+</head>
+<body>
+<div class="panel admin-panel" ms-controller="sysAppInfo">
+    <div class="panel-head"><strong class="icon-reorder"> 内容列表</strong></div>
+    <div class="padding border-bottom">
+        <ul class="search" style="padding-left:10px;">
+            <li><a ms-on-click="addSysAppInfo($event)" class="button border-main icon-plus-square-o" href="javascript:void(0)"> 添加内容</a></li>
+        </ul>
+    </div>
+    <table class="table table-hover text-center">
+        <tr>
+            <th>网站名称</th>
+            <th>网站简称</th>
+            <th>编码</th>
+            <th>LOGO</th>
+            <th>备案信息</th>
+            <th>前台地址</th>
+            <th>后台地址</th>
+            <th>状态</th>
+            <th>网站描述</th>
+            <th width="310">操作</th>
+        </tr>
+
+        <!--ms-for:(index,item) in @sysAppInfoList-->
+        <tr>
+            <td><font color="#00CC99">{{item.sysName}}</font></td>
+            <td>{{item.sysNameShort}}</td>
+            <td>{{item.sysCode}}</td>
+            <td>{{item.sysLogo}}</td>
+            <td>{{item.sysRecords}}</td>
+            <td>{{item.sysSiteUrl}}</td>
+            <td>{{item.sysBackUrl}}</td>
+            <td>
+                <span ms-click="changeState(item.id, item.state)" ms-if="item.state == 1" class="badge bg-sub print">有效</span>
+                <span ms-click="changeState(item.id, item.state)" ms-if="item.state == 0" class="badge bg-gray print">无效</span>
+            </td>
+            <td>{{item.sysDesc}}</td>
+            <td>
+                <div class="button-group">
+                    <a class="button border-main" href="javascript:void(0)" ms-on-click="editSysAppInfoById(item.id)">
+                        <span class="icon-edit"></span> 修改
+                    </a>
+                    <a class="button border-red" href="javascript:void(0)" ms-on-click="delSysAppInfoById(item.id)">
+                        <span class="icon-trash-o"></span> 删除
+                    </a>
+                </div>
+            </td>
+        </tr>
+        <!--ms-for-end:-->
+
+        <tr>
+            <td colspan="10">
+                <div id="sysAppInfoPage"></div>
+            </td>
+        </tr>
+    </table>
+</div>
+</body>
+
+<!--弹窗部分-Start-->
+<div class="panel admin-panel margin-top" ms-controller="editSysAppInfo" id="editSysAppInfo" hidden="hidden">
+    <div class="body-content">
+        <form class="form-x">
+            <input ms-duplex="@sysAppInfo.id" type="hidden" name="id" value=""/>
+            <div class="form-group">
+                <div class="label">
+                    <label>系统名称：</label>
+                </div>
+                <div class="field">
+                    <input ms-duplex="@sysAppInfo.sysName" type="text" name="sysName" class="input w50" placeholder="请输入系统名称"
+                           data-validate="required:请输入系统名称!"/>
+                    <div class="tips"></div>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="label">
+                    <label>系统简称：</label>
+                </div>
+                <div class="field">
+                    <input ms-duplex="@sysAppInfo.sysNameShort" type="text" name="sysNameShort" class="input w50" placeholder="请输入系统简称"/>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="label">
+                    <label>系统编码：</label>
+                </div>
+                <div class="field">
+                    <input ms-duplex="@sysAppInfo.sysCode" type="text" name="sysCode" class="input w50" placeholder="请输入系统编码"/>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="label">
+                    <label>系统LOGO：</label>
+                </div>
+                <div class="field">
+                    <input ms-duplex="@sysAppInfo.sysLogo" type="text" name="sysLogo" class="input w50" placeholder="请输入系统LOGO"/>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="label">
+                    <label>前台地址：</label>
+                </div>
+                <div class="field">
+                    <input ms-duplex="@sysAppInfo.sysSiteUrl" type="text" name="sysSiteUrl" class="input w50" placeholder="请输入系统前台地址"/>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="label">
+                    <label>后台地址：</label>
+                </div>
+                <div class="field">
+                    <input ms-duplex="@sysAppInfo.sysBackUrl" type="text" name="sysBackUrl" class="input w50" placeholder="请输入系统后台地址"/>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="label">
+                    <label>备案信息：</label>
+                </div>
+                <div class="field">
+                    <textarea ms-duplex="@sysAppInfo.sysRecords" type="text" class="input" name="sysRecords" style="height:100px;"></textarea>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="label">
+                    <label>系统描述：</label>
+                </div>
+                <div class="field">
+                    <textarea ms-duplex="@sysAppInfo.sysDesc" type="text" class="input" name="sysDesc" style="height:100px;"></textarea>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="label">
+                    <label>是否有效：</label>
+                </div>
+                <div class="field">
+                    <div class="button-group radio">
+
+                        <label class="button active" ms-if="@sysAppInfo.state == 1">
+                            <span class="icon icon-check"></span>
+                            <input ms-duplex="@sysAppInfo.state" name="state" value="1" type="radio"
+                                   checked="checked">是
+                        </label>
+                        <label class="button" ms-if="@sysAppInfo.state == 0 || @sysAppInfo.state == -1">
+                            <span class="icon icon-check"></span>
+                            <input ms-duplex="@sysAppInfo.state" name="state" value="1" type="radio"
+                                   checked="checked">是
+                        </label>
+                        <label class="button active" ms-if="@sysAppInfo.state == 0">
+                            <span class="icon icon-times"></span>
+                            <input ms-duplex="@sysAppInfo.state" name="state" value="0" type="radio"
+                                   checked="checked">否
+                        </label>
+                        <label class="button" ms-if="@sysAppInfo.state == 1 || @sysAppInfo.state == -1">
+                            <span class="icon icon-times"></span>
+                            <input ms-duplex="@sysAppInfo.state" name="state" value="0" type="radio"
+                                   checked="checked">否
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="label">
+                    <label></label>
+                </div>
+                <div class="field">
+                    <button ms-on-click="subSysAppInfo($event)" class="button bg-main icon-check-square-o" type="button">
+                        提交
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+<!--弹窗部分-End-->
+
+</html>

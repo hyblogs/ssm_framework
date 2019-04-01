@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:sec="http://www.springframework.org/schema/security"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/security
+       http://www.springframework.org/schema/security/spring-security.xsd">
+
+    <!-- 不经过Spring-Security过滤，其中**代表可以跨越目录，*不可跨越目录 -->
+    <!-- 过滤网页请求路径 -->
+    <sec:http pattern="/resources/**/*" security="none"/>
+    <sec:http pattern="/view/common/**/*" security="none"/>
+    <sec:http pattern="/login*" security="none"/>
+    <sec:http pattern="/favicon.ico" security="none"/>
+    <!-- 过滤接口请求路径 -->
+    <sec:http pattern="/session/invalidate" security="none"/>
+
+    <!--<sec:http auto-config="false" use-expressions="true" disable-url-rewriting="false"
+              entry-point-ref="secAuthenticationLoginEntry"
+              authentication-manager-ref="authenticationManager">
+
+        <sec:logout logout-url="/logout" success-handler-ref="secLogoutSuccessHandler"
+                    delete-cookies="JSESSIONID"/>
+        <sec:custom-filter position="CONCURRENT_SESSION_FILTER" ref="concurrencyFilter"/>
+        <sec:custom-filter before="LOGOUT_FILTER" ref="secAuthenticationProcessingFilter"/>
+        <sec:custom-filter position="FORM_LOGIN_FILTER" ref="ajaxLoginFilter"/>
+        <sec:custom-filter before="FILTER_SECURITY_INTERCEPTOR" ref="filterSecurityInterceptor"/>
+        <sec:custom-filter position="REMEMBER_ME_FILTER" ref="rememberMeFilter"/>
+        <sec:csrf disabled="true"/>
+        <sec:headers disabled="true"/>
+        <sec:access-denied-handler error-page="/view/common/403.jsp"/>
+        <sec:session-management session-authentication-strategy-ref="sas"/>
+    </sec:http>
+
+    &lt;!&ndash; 并发session控制 开始 &ndash;&gt;
+    <bean id="concurrencyFilter" class="org.springframework.security.web.session.ConcurrentSessionFilter">
+        <constructor-arg ref="sessionRegistry"/>
+        <constructor-arg value="/session/invalidate"/>
+    </bean>
+    <bean id="sas"
+          class="org.springframework.security.web.authentication.session.CompositeSessionAuthenticationStrategy">
+        <constructor-arg>
+            <list>
+                <bean class="org.springframework.security.web.authentication.session.ConcurrentSessionControlAuthenticationStrategy">
+                    <constructor-arg ref="sessionRegistry"/>
+                    <property name="maximumSessions" value="1"/>
+                    <property name="exceptionIfMaximumExceeded" value="false"/>
+                </bean>
+                <bean class="org.springframework.security.web.authentication.session.SessionFixationProtectionStrategy">
+                    <property name="alwaysCreateSession" value="true"/>
+                </bean>
+                <bean class="org.springframework.security.web.authentication.session.RegisterSessionAuthenticationStrategy">
+                    <constructor-arg ref="sessionRegistry"/>
+                </bean>
+            </list>
+        </constructor-arg>
+    </bean>
+    <bean id="sessionRegistry" class="org.springframework.security.core.session.SessionRegistryImpl"/>
+    &lt;!&ndash; 并发session控制 结束 &ndash;&gt;
+
+    &lt;!&ndash; 入口 配置  &ndash;&gt;
+    &lt;!&ndash; 通过 User-Agent 是否为 enfo-mobile-client 判断是BS PC 端还是 手机app调用 ，
+    	若为pc端，则通过defaultLoginUrl 指定的 值 显示相应的页面 ，
+    	若为手机app，则返回json串，供手机app判断&ndash;&gt;
+    <bean id="secAuthenticationLoginEntry"
+          class="com.bjenfo.scaffold.modules.sec.login.SecAuthenticationLoginEntry">
+        <property name="defaultLoginUrl" value="/login"/>
+    </bean>
+
+    &lt;!&ndash;  Form 表单  开始 &ndash;&gt;
+    &lt;!&ndash; 登出 配置 &ndash;&gt;
+    <bean id="secLogoutSuccessHandler" class="com.bjenfo.scaffold.modules.sec.logout.SecLogoutSuccessHandler">
+        <property name="resolvers">
+            <list>
+                <ref bean="secLogoutSuccessUrlResolver"/>
+            </list>
+        </property>
+        <property name="defaultUrl" value="${adminPath}/login"/>
+    </bean>
+
+    <bean id="secLogoutSuccessUrlResolver" class="com.bjenfo.scaffold.modules.sec.logout.SecLogoutSuccessUrlResolver">
+        &lt;!&ndash; 登出后 显示界面 &ndash;&gt;
+        <property name="url" value="${adminPath}/login"/>
+    </bean>
+
+    &lt;!&ndash;  登入  认证拦截器 &ndash;&gt;
+    <bean id="secAuthenticationProcessingFilter"
+          class="com.bjenfo.scaffold.modules.sec.filter.SecAuthenticationProcessingFilter">
+        <constructor-arg value="${adminPath}/secLogin/check"/>
+        <property name="sessionAuthenticationStrategy" ref="sas"/>
+        <property name="tokenResolver" ref="secAuthenticationTokenResolver"/>
+        <property name="authenticationManager" ref="authenticationManager"/>
+        <property name="authenticationSuccessHandler" ref="secAuthenticationSuccessHandler"/>
+        <property name="authenticationFailureHandler" ref="secAuthenticationFailureHandler"/>
+        <property name="allowEmptyValidateCode" value="true"/>
+        <property name="rememberMeServices" ref="rememberMeServices"/>
+    </bean>
+
+    &lt;!&ndash; 认证成功 处理器 &ndash;&gt;
+    <bean id="secAuthenticationSuccessHandler"
+          class="com.bjenfo.scaffold.modules.sec.authentication.handler.SecAuthenticationSuccessHandler">
+        <property name="defaultTargetUrl" value="${frontPath}/common/index"/>
+        &lt;!&ndash; alwaysUseDefaultTargetUrl
+            为false，则，实现了用户 请求的继续进行 ；
+        			如，用户浏览商品后 添加到购物车，点击提交时，若用户没有登录 ，则显示登录界面，
+        			  登录成功之后，则显示订单信息。
+        	为true，则会丢失用户在客户端的操作，只要登录成功就一定会进入 defaultTargetUrl 指定的页面  &ndash;&gt;
+        <property name="alwaysUseDefaultTargetUrl" value="true"/>
+    </bean>
+
+
+    &lt;!&ndash; 认证失败 处理器 &ndash;&gt;
+    <bean id="secAuthenticationFailureHandler"
+          class="org.springframework.security.web.authentication.ExceptionMappingAuthenticationFailureHandler">
+        <property name="exceptionMappings">
+            <map>
+                <entry key="com.bjenfo.scaffold.modules.sec.exception.SecBadCredentialsException"
+                       value="${adminPath}/login?error=1"/>
+                <entry key="com.bjenfo.scaffold.modules.sec.exception.SecCaptchaWrongException"
+                       value="${adminPath}/login?error=2"/>
+            </map>
+        </property>
+    </bean>-->
+    <!--  Form 表单  结束 -->
+</beans>

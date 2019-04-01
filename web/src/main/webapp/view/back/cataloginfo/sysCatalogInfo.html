@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+    <meta name="renderer" content="webkit">
+    <title>头底菜单管理</title>
+    <link rel="stylesheet" href="./../../css/pintuer.css">
+    <link rel="stylesheet" href="./../../css/style.css">
+    <link rel="stylesheet" href="./../../css/admin.css">
+    <link rel="stylesheet" href="./../../layui/css/layui.css">
+
+    <script type="text/javascript" src="./../../js/jquery.js"></script>
+    <script type="text/javascript" src="./../../js/pintuer.js"></script>
+    <script type="text/javascript" src="./../../layer/layer.js"></script>
+    <script type="text/javascript" src="./../../layui/layui.all.js"></script>
+    <script type="text/javascript" src="./../../js/common.js"></script>
+    <!--页面数据绑定的js-->
+    <script type="text/javascript" src="./../../js/avalon.js"></script>
+    <script type="text/javascript" src="sysCatalogInfo.js"></script>
+</head>
+<body>
+<div class="panel admin-panel" ms-controller="sysCatalogInfo">
+    <div class="panel-head">
+        <strong class="icon-reorder"> 内容列表</strong>
+    </div>
+    <div class="padding border-bottom">
+        <ul class="search">
+            <li><a class="button border-main icon-plus-square-o" ms-click="addSysCatalogInfo($event)" href="javascript:void(0)"> 添加内容</a></li>
+            <li>搜索：</li>
+            <li>状态
+                <select ms-duplex="@sysCatalogInfoSearchParams.catalogState" name="catalogState" class="input" style="width:60px; line-height:17px; display:inline-block">
+                    <option value="">选择</option>
+                    <option value="1">有效</option>
+                    <option value="0">无效</option>
+                </select>
+                &nbsp;&nbsp;
+                头底
+                <select ms-duplex="@sysCatalogInfoSearchParams.catalogType" name="catalogType" class="input" style="width:60px; line-height:17px;display:inline-block">
+                    <option value="">选择</option>
+                    <option value="1">底部</option>
+                    <option value="0">头部</option>
+                </select>
+            </li>
+            <li>
+                <input ms-duplex="@sysCatalogInfoSearchParams.catalogName" type="text" placeholder="请输入搜索菜单名称" name="catalogName" class="input" style="width:250px; line-height:17px;display:inline-block"/>
+                <a href="javascript:void(0)" class="button border-main icon-search my-search-btn" ms-on-click="findSysCatalogInfo()"> 搜索</a>
+            </li>
+        </ul>
+    </div>
+    <table class="table table-hover text-center">
+        <tr>
+            <th>菜单名称</th>
+            <th>菜单编号</th>
+            <th>状态</th>
+            <th>类型</th>
+            <th>图标</th>
+            <th width="200">链接地址</th>
+            <th>颜色</th>
+            <th>序号</th>
+            <th>创建时间</th>
+            <th>修改时间</th>
+            <th width="250">备注</th>
+            <th width="310">操作</th>
+        </tr>
+        <!--ms-for:(index,item) in @sysCatalogInfoList-->
+        <tr>
+            <td>{{item.catalogName}}</td>
+            <td>{{item.catalogCode}}</td>
+            <td>
+                <span ms-click="changeState(item.id, item.catalogState)" ms-if="item.catalogState == 1" class="badge bg-green print">有效</span>
+                <span ms-click="changeState(item.id, item.catalogState)" ms-if="item.catalogState == 0" class="badge print">无效</span>
+            </td>
+            <td>
+                <span ms-if="item.catalogType == 1" class="badge bg-blue">底部</span>
+                <span ms-if="item.catalogType == 0" class="badge bg-yellow">头部</span>
+            </td>
+            <td>{{item.catalogIcon}}</td>
+            <td>{{item.catalogUrl}}</td>
+            <td><font ms-attr="{color: item.catalogColor}">{{item.catalogColor}}</font></td>
+            <td>{{item.catalogSort}}</td>
+            <td>{{item.createTime | date("yyyy MM dd:HH:mm:ss")}}</td>
+            <td>{{item.updateTime | date("yyyy MM dd:HH:mm:ss")}}</td>
+            <td>{{item.remark}}</td>
+            <td>
+                <div class="button-group">
+                    <a ms-on-click="editSysCatalogInfoById(item.id)" class="button border-main" href="javascript:void(0)">
+                        <span class="icon-edit"></span> 修改
+                    </a>
+                    <a ms-on-click="delSysCatalogInfoById(item.id)" class="button border-red" href="javascript:void(0)">
+                        <span class="icon-trash-o"></span> 删除
+                    </a>
+                </div>
+            </td>
+        </tr>
+        <!--ms-for-end:-->
+        <tr>
+            <td colspan="12">
+                <div id="sysCatalogInfoPage"></div>
+            </td>
+        </tr>
+    </table>
+</div>
+</body>
+
+<!--弹窗部分-Start-->
+<div class="panel admin-panel margin-top" ms-controller="editSysCatalogInfo" id="editSysCatalogInfo" hidden="hidden">
+    <div class="body-content">
+        <form class="form-x">
+            <input ms-duplex="@sysCatalogInfo.id" type="hidden" name="id" value=""/>
+            <div class="form-group">
+                <div class="label">
+                    <label>菜单类型：</label>
+                </div>
+                <div class="field">
+                    <select ms-duplex="@sysCatalogInfo.catalogType" name="catalogType" class="input w50">
+                        <option value="">请选择菜单类型</option>
+                        <option value="0">头部菜单</option>
+                        <option value="1">底部菜单</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="label">
+                    <label>菜单名称：</label>
+                </div>
+                <div class="field">
+                    <input ms-duplex="@sysCatalogInfo.catalogName" type="text" name="catalogName" class="input"
+                           placeholder="请输入菜单名称" data-validate="required:请输入菜单名称!"/>
+                    <div class="tips"></div>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="label">
+                    <label>菜单编号：</label>
+                </div>
+                <div class="field">
+                    <input ms-duplex="@sysCatalogInfo.catalogCode" type="text" name="catalogCode" class="input"
+                           placeholder="请输入菜单编号" data-validate="required:请输入菜单编号!"/>
+                    <div class="tips"></div>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="label">
+                    <label>菜单图标：</label>
+                </div>
+                <div class="field">
+                    <input ms-duplex="@sysCatalogInfo.catalogIcon" type="text" name="catalogIcon" class="input"
+                           placeholder="请输入菜单图标"/>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="label">
+                    <label>链接地址：</label>
+                </div>
+                <div class="field">
+                    <input ms-duplex="@sysCatalogInfo.catalogUrl" type="text" name="catalogUrl" class="input"
+                           placeholder="请输入链接地址"/>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="label">
+                    <label>菜单颜色：</label>
+                </div>
+                <div class="field">
+                    <input ms-duplex="@sysCatalogInfo.catalogColor" type="text" name="catalogColor" class="input"
+                           placeholder="请输入菜单颜色"/>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="label">
+                    <label>菜单序号：</label>
+                </div>
+                <div class="field">
+                    <input ms-duplex="@sysCatalogInfo.catalogSort" type="text" class="input w50" name="catalogSort"
+                           value="0"  data-validate="number:请输入菜单序号" />
+                    <div class="tips"></div>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="label">
+                    <label>是否有效：</label>
+                </div>
+                <div class="field">
+                    <select ms-duplex="@sysCatalogInfo.catalogState" name="catalogState" class="input w50">
+                        <option value="">请选择菜单状态</option>
+                        <option value="0">无效</option>
+                        <option value="1">有效</option>
+                        <option value="2">已删除</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="label">
+                    <label>备注：</label>
+                </div>
+                <div class="field">
+                    <textarea ms-duplex="@sysCatalogInfo.remark" type="text" class="input" name="remark"
+                              style="height:100px;"></textarea>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="label">
+                    <label></label>
+                </div>
+                <div class="field">
+                    <button ms-on-click="subSysCatalogInfo($event)" class="button bg-main icon-check-square-o"
+                            type="button">
+                        提交
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+<!--弹窗部分-End-->
+
+</html>

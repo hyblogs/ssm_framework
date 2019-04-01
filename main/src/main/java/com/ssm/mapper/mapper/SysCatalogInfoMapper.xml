@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ssm.mapper.SysCatalogInfoMapper">
+  <resultMap id="BaseResultMap" type="com.ssm.entity.mapping.SysCatalogInfo">
+    <!--
+      WARNING - @mbg.generated
+    -->
+    <id column="id" jdbcType="BIGINT" property="id" />
+    <result column="catalog_name" jdbcType="VARCHAR" property="catalogName" />
+    <result column="catalog_code" jdbcType="VARCHAR" property="catalogCode" />
+    <result column="catalog_state" jdbcType="TINYINT" property="catalogState" />
+    <result column="catalog_icon" jdbcType="VARCHAR" property="catalogIcon" />
+    <result column="catalog_url" jdbcType="VARCHAR" property="catalogUrl" />
+    <result column="catalog_color" jdbcType="VARCHAR" property="catalogColor" />
+    <result column="catalog_sort" jdbcType="TINYINT" property="catalogSort" />
+    <result column="catalog_type" jdbcType="TINYINT" property="catalogType" />
+    <result column="create_time" jdbcType="TIMESTAMP" property="createTime" />
+    <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
+    <result column="remark" jdbcType="VARCHAR" property="remark" />
+  </resultMap>
+  <select id="selectByGen">
+    <!-- 
+    WARNING - @mbg.generated  
+    -->  
+    SELECT 
+        id AS id , 
+        catalog_name AS catalogName , 
+        catalog_code AS catalogCode , 
+        catalog_state AS catalogState , 
+        catalog_icon AS catalogIcon , 
+        catalog_url AS catalogUrl , 
+        catalog_color AS catalogColor , 
+        catalog_sort AS catalogSort , 
+        catalog_type AS catalogType , 
+        create_time AS createTime , 
+        update_time AS updateTime , 
+        remark AS remark  
+    FROM 
+        sys_catalog_info
+  </select>
+</mapper>

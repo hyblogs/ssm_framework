@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="debug">
+    <Appenders>
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout charset="UTF-8" pattern="[%d{yyyy-MM-dd HH:mm:ss:SSS}] [%p] - %m%n"/>
+        </Console>
+
+        <RollingFile name="RollingFileInfo" fileName="/data/logs/ssm_framework/info.log"
+                     filePattern="/data/logs/ssm_framework/${date:yyyy-MM}/info-%d{yyyy-MM-dd}-%i.log">
+            <Filters>
+                <ThresholdFilter level="DEBUG"/>
+                <ThresholdFilter level="WARN" onMatch="DENY" onMismatch="NEUTRAL"/>
+            </Filters>
+            <PatternLayout charset="UTF-8" pattern="[%d{yyyy-MM-dd HH:mm:ss:SSS}] [%p] - %m%n"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy/>
+                <SizeBasedTriggeringPolicy size="100 MB"/>
+            </Policies>
+        </RollingFile>
+
+        <RollingFile name="RollingFileWarn" fileName="/data/logs/ssm_framework/warn.log"
+                     filePattern="/data/logs/ssm_framework/${date:yyyy-MM}/warn-%d{yyyy-MM-dd}-%i.log">
+            <Filters>
+                <ThresholdFilter level="WARN"/>
+                <ThresholdFilter level="ERROR" onMatch="DENY" onMismatch="NEUTRAL"/>
+            </Filters>
+            <PatternLayout charset="UTF-8" pattern="[%d{yyyy-MM-dd HH:mm:ss:SSS}] [%p] - %l - %m%n"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy/>
+                <SizeBasedTriggeringPolicy size="100 MB"/>
+            </Policies>
+        </RollingFile>
+
+        <RollingFile name="RollingFileError" fileName="/data/logs/ssm_framework/error.log"
+                     filePattern="/data/logs/ssm_framework/${date:yyyy-MM}/error-%d{yyyy-MM-dd}-%i.log">
+            <ThresholdFilter level="ERROR"/>
+            <PatternLayout charset="UTF-8" pattern="[%d{yyyy-MM-dd HH:mm:ss:SSS}] [%p] - %l - %m%n"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy/>
+                <SizeBasedTriggeringPolicy size="100 MB"/>
+            </Policies>
+        </RollingFile>
+
+    </Appenders>
+
+    <Loggers>
+        <!--过滤掉spring和hibernate的一些无用的debug信息-->
+        <Logger name="org.springframework" level="DEBUG"/>
+        <Logger name="org.hibernate" level="DEBUG"/>
+
+        <!-- 设置日志级别Debug以上级别，其余级别日志不收集 -->
+        <Root level="debug">
+            <!-- 设置控制台打印日志信息 -->
+            <Appender-ref ref="Console"/>
+            <!-- 设置日志打印级别 -->
+            <Appender-ref ref="RollingFileInfo"/>
+            <Appender-ref ref="RollingFileWarn"/>
+            <Appender-ref ref="RollingFileError"/>
+        </Root>
+    </Loggers>
+
+</Configuration>

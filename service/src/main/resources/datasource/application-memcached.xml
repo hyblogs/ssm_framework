@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:P="http://www.springframework.org/schema/p"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <description>This is Memcached Config</description>
+
+    <!-- Memcached-Socket连接池配置信息 -->
+    <bean id="memcachedPoolConfig" class="com.whalin.MemCached.SockIOPool" init-method="initialize"
+          factory-method="getInstance" destroy-method="shutDown" P:initConn="${memcache.initConn}"
+          P:weights="${memcache.weights}" P:minConn="${memcache.minConn}" P:maxConn="${memcache.maxConn}"
+          P:maxIdle="${memcache.maxIdle}" P:maintSleep="${memcache.maintSleep}" P:nagle="${memcache.nagle}"
+          P:socketTO="${memcache.socketTO}" P:socketConnectTO="${memcache.socketConnectTO}">
+
+        <!-- 缓存服务地址(集群环境有多个地址就写多个value) -->
+        <property name="servers">
+            <list>
+                <value>${memcache.servers}</value>
+            </list>
+        </property>
+    </bean>
+
+    <!-- 定义Memcached连接对象bean(默认无法扫描到此bean) -->
+    <bean id="memCachedClient" class="com.whalin.MemCached.MemCachedClient"/>
+</beans>
